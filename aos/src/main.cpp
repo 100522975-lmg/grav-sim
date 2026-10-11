@@ -8,7 +8,17 @@
 
 #include <progargs.hpp>
 
+// User includes
+#include "common.h"
+
+struct Particle {
+  double mass, radius;
+  std::vector<double> position;
+  std::vector<double> velocity;
+};
+
 int main(int argc, char ** argv) try {
+  // Parse CLI args
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
   common::program_arguments const progargs{vecargs};
@@ -18,8 +28,7 @@ int main(int argc, char ** argv) try {
                progargs.num_iterations(), progargs.width(), progargs.height(),
                progargs.time_step());
 
-  // Rest of program
-
+  // Error handling
 } catch (std::exception const & e) {
   std::cerr << "grav-aos: " << e.what() << '\n';
   return EXIT_FAILURE;
