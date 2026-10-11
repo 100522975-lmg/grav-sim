@@ -4,7 +4,7 @@
 #include <iostream>
 
 // Reads path and uses a regex to parse valid particle info 
-std::vector<double> parse_particle_line(std::string line) {
+std::vector<double> parse_particle_line(const std::string& line) {
   // regex definitions: force checks positive magnitudes
   const std::string num = R"((\d+\.\d+))";
   const regex pattern(num + " " + num + " " + num + " " +

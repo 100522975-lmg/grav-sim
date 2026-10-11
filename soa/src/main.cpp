@@ -8,6 +8,9 @@
 
 #include <progargs.hpp>
 
+// user includes
+#include "soa.hpp"
+#include "common.hpp"
 
 int main(int argc, char ** argv) try {
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
@@ -19,6 +22,14 @@ int main(int argc, char ** argv) try {
                progargs.num_iterations(), progargs.width(), progargs.height(),
                progargs.time_step());
 
+  // CODE START  
+  const std::string path = "inputs/input.txt";
+  const auto particle_data = read_particles(&path);
+
+   
+
+
+  // CODE END
 } catch (std::exception const & e) {
   std::cerr << "grav-soa: " << e.what() << '\n';
   return EXIT_FAILURE;

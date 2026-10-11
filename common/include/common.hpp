@@ -4,8 +4,8 @@
 #include <string> 
 #include <vector>
 
-std::vector<double> parse_particle_line(const std::string& path);
+std::vector<double> parse_particle_line(const std::string& line);
 
-std::vector<std::vector<double>> read_particles(std::string input_path);
+std::vector<std::vector<double>> read_particles(const std::string& input_path);
 
 #endif
