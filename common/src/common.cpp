@@ -1,4 +1,4 @@
-#include "common.hpp"
+ #include "common.hpp"
 
 #include <regex>
 #include <iostream>
@@ -7,7 +7,7 @@
 std::vector<double> parse_particle_line(const std::string& line) {
   // regex definitions: force checks positive magnitudes
   const std::string num = R"((\d+\.\d+))";
-  const regex pattern(num + " " + num + " " + num + " " +
+  const std::regex pattern(num + " " + num + " " + num + " " +
                       num + " " + num + " " + num);
   std::smatch match;
  
@@ -19,12 +19,12 @@ std::vector<double> parse_particle_line(const std::string& line) {
   std::vector<double> parsed;
 
   for (int i = 0; i < 6; i++) {
-    parsed.push_back(std::stod(m[i+1].str()));
+    parsed.push_back(std::stod(match[i+1].str()));
   }
 
   return parsed;
 }
 
-std::vector<std::vector<double>> read_particles(std::string input_path) {
-  return {{}};
+std::vector<std::vector<double>> read_particles(const std::string& input_path) {
+  return {};
 }
