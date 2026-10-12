@@ -7,8 +7,10 @@
 std::vector<double> parse_particle_line(const std::string& line) {
   // regex definitions: force checks positive magnitudes
   const std::string num = R"((\d+\.\d+))";
+  //since velocities can be negative we check for those values in velocities
+  const std::string vels = R"((-?\d+\.\d+))";
   const std::regex pattern(num + " " + num + " " + num + " " +
-                      num + " " + num + " " + num);
+                      num + " " + vels + " " + vels);
   std::smatch match;
  
   // regex match line and validate input
@@ -25,8 +27,23 @@ std::vector<double> parse_particle_line(const std::string& line) {
   return parsed;
 }
 
-//crear funcion check_bound para ver que x e y estan en los valores correctos
+//checks particle inside enclosure using the given formulas
+bool check_bound(const std::vector<double>& particle, double width, double height){
+  const double radius = particle[1];
+  const double x = particle[2];
+  const double y = particle[3];
 
-std::vector<std::vector<double>> read_particles(const std::string& input_path) {
+  //check position of particle both in the x and y axis
+  if (x<radius or x>width-radius){
+    return false;
+  }
+  if (y<radius or y>height-radius){
+    return false;
+  }
+  //passed both checks so its inside
+  return true;
+}
+
+std::vector<std::vector<double>> read_particles(const std::string& input_path) {  
   return {};
 }

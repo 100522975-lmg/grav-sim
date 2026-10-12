@@ -9,7 +9,7 @@
 
 // User includes
 //#include "common.hpp"
-namespace{ //anonimous namespace 
+namespace{ //anonymous namespace 
   struct Particle {
     double mass, radius;
     std::vector<double> position;
