@@ -9,7 +9,7 @@
 #include <progargs.hpp>
 
 // user includes
-#include "soa.hpp"
+//#include "soa.hpp"
 #include "common.hpp"
 
 int main(int argc, char ** argv) try {
@@ -24,7 +24,7 @@ int main(int argc, char ** argv) try {
 
   // CODE START  
   const std::string path = "inputs/input.txt";
-  const auto particle_data = read_particles(&path);
+  const auto particle_data = read_particles(path);
 
    
 

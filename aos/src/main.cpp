@@ -3,20 +3,19 @@
 #include <iostream>
 #include <print>
 #include <span>
-#include <string>
 #include <vector>
 
 #include <progargs.hpp>
 
 // User includes
-#include "common.h"
-
-struct Particle {
-  double mass, radius;
-  std::vector<double> position;
-  std::vector<double> velocity;
-};
-
+//#include "common.hpp"
+namespace{ //anonimous namespace 
+  struct Particle {
+    double mass, radius;
+    std::vector<double> position;
+    std::vector<double> velocity;
+  };
+}
 int main(int argc, char ** argv) try {
   // Parse CLI args
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};

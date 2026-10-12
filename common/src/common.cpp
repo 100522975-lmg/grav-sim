@@ -25,6 +25,8 @@ std::vector<double> parse_particle_line(const std::string& line) {
   return parsed;
 }
 
+//crear funcion check_bound para ver que x e y estan en los valores correctos
+
 std::vector<std::vector<double>> read_particles(const std::string& input_path) {
   return {};
 }
