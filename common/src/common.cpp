@@ -1,11 +1,9 @@
 #include "common.hpp"
 #include <fstream>
-#include <sstream>
-#include <iostream>
 #include <string>
 #include <vector>
 #include <regex>
-//#include <iostream>
+
 
 // Reads path and uses a regex to parse valid particle info 
 std::vector<double> parse_particle_line(const std::string& line) {
