@@ -28,7 +28,7 @@ void update_velocity(particle & p, double time_step);
 void update_position(particle & p, double time_step);
 
 //applies rebound rule against the walls of the enclosure
-void apply_rebound(particle & p,double width, double heigh)
+void apply_rebound(particle & p,double width, double heigh);
 
 //runs one simulation WITHOUT collisions
 void step(std::vector<particle> & particles, double width, double height, double time_step);
