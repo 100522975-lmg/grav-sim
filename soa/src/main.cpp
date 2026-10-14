@@ -25,8 +25,29 @@ int main(int argc, char ** argv) try {
   const std::string path = "inputs/input.txt";
   const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   
+  // initialize particles
   ParticleSOA particles(particle_data);
- 
+  
+  // TODO: Write initial configuration to file
+  
+  // force + acceleration init
+  std::vector<common::point> force;
+  std::vector<common::point> acceleration;
+  
+  // main loop
+  for (auto i : progargs.num_iterations()) {
+    force = ParticleSOA::accumulate_force_pairs();
+    acceleration = ParticleSOA::compute_acceleration(force);
+
+    // update velocity
+    ParticleSOA::update_velocity(acceleration);
+
+    // update position
+    ParticleSOA::update_position();
+
+    // apply rebound
+    ParticleSOA::apply_rebound(progargs.width(), progargs.height());
+  }
 
 } catch (std::exception const & e) {
   std::cerr << "grav-soa: " << e.what() << '\n';
