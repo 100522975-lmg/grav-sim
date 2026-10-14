@@ -4,6 +4,9 @@
 #include <string> 
 #include <vector>
 
+namespace constants {
+    inline constexpr G = 6.67430e-11;
+}
 
 std::vector<double> parse_particle_line(const std::string& line);
 
