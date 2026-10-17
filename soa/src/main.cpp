@@ -11,6 +11,9 @@
 // user includes
 #include "soa.hpp"
 #include "common.hpp"
+#include "writer.hpp"
+#include <ranges>
+#include <string_view>
 
 int main(int argc, char ** argv) try {
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
@@ -26,10 +29,17 @@ int main(int argc, char ** argv) try {
   const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   
   // initialize particles
-  ParticleSOA particles(particle_data);
+  ParticleSOA particles{particle_data};
   
-  // TODO: Write initial configuration to file
-  
+  // Write initial configuration to file
+  const std::string init_file = "init_config.txt";
+  common::writer init{init_file};
+
+  init.format_header(progargs.width(), progargs.height(), progargs.time_step(), particles.id.size());
+  for (const auto&& [m, r, p, v] : std::views::zip(particles.mass, particles.radius, particles.position, particles.velocity)) {
+    init.format_particle_line(m, r, p, v);
+  }
+
   // force + acceleration init
   std::vector<common::point> force;
   std::vector<common::point> acceleration;
