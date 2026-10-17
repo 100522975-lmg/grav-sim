@@ -5,6 +5,7 @@ set(COMMON_SRC_FILES
 set(CURRENT_DIR_SRC_FILES 
   "${CMAKE_CURRENT_SOURCE_DIR}/test_progargs.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_point.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_gravity.cpp"
 )
 
 add_unit_test_target(
