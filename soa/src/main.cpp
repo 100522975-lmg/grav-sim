@@ -35,18 +35,15 @@ int main(int argc, char ** argv) try {
   std::vector<common::point> acceleration;
   
   // main loop
-  for (auto i : progargs.num_iterations()) {
-    force = ParticleSOA::accumulate_force_pairs();
-    acceleration = ParticleSOA::compute_acceleration(force);
+  for (std::size_t i = 0; i < progargs.num_iterations(); ++i) {
+    force = particles.accumulate_force_pairs();
+    acceleration = particles.compute_acceleration(force);
 
-    // update velocity
-    ParticleSOA::update_velocity(acceleration);
-
-    // update position
-    ParticleSOA::update_position();
+    // update velocity + position 
+    particles.update_all(acceleration, progargs.time_step());
 
     // apply rebound
-    ParticleSOA::apply_rebound(progargs.width(), progargs.height());
+    particles.apply_rebound(progargs.width(), progargs.height());
   }
 
 } catch (std::exception const & e) {

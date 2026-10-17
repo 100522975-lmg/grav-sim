@@ -16,13 +16,11 @@ struct ParticleSOA {
 
     [[nodiscard]] std::vector<common::point> accumulate_force_pairs() const;
 
-    [[nodiscard]] std::vector<common::point> compute_acceleration(const std::vector<std::vector<common::point>>& forces) const;
+    [[nodiscard]] std::vector<common::point> compute_acceleration(const std::vector<common::point>& force) const;
+    
+    void update_all(const std::vector<common::point>& acceleration, double dt);
 
-    inline void update_velocity(const std::vector<common::point>& acceleration, const double time_step);
-
-    inline void update_position(const double time_step);
-
-    inline void apply_rebound(const double width, const double height);
+    void apply_rebound(const double width, const double height);
 };
     
 
