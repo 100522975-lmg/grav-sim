@@ -20,7 +20,7 @@ struct ParticleSOA {
     
     void update_all(const std::vector<common::point>& acceleration, double dt);
 
-    void apply_rebound(const double width, const double height);
+    void apply_rebound(double width, double height);
 };
     
 

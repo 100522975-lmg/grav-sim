@@ -5,7 +5,7 @@
 
 // Take Nx6 input matrix and construct SOA
 ParticleSOA::ParticleSOA(const std::vector<std::vector<double>>& particles) {
-  std::size_t n = particles.size();
+  std::size_t const n = particles.size();
   // Reserve space for each vector
   id.reserve(n);
   mass.reserve(n);
@@ -14,7 +14,7 @@ ParticleSOA::ParticleSOA(const std::vector<std::vector<double>>& particles) {
   velocity.reserve(n);
 
   // Populate each vector with input data
-  for (int i = 0; auto& row : particles) {
+  for (int i = 0; const auto& row : particles) {
     id.push_back(i++);
     mass.push_back(row.at(0));
     radius.push_back(row.at(1));
@@ -30,7 +30,7 @@ std::vector<common::point> ParticleSOA::accumulate_force_pairs() const {
   for (std::size_t i = 0; i < n; i++) {
     double fx_i = 0, fy_i = 0;
     for (std::size_t j = i+1; j < n; j++) {
-      const auto f = common::pair_force(mass[i], mass[j], position[i], position[j]);
+      const auto f = common::pair_force(mass.at(i), mass.at(j), position.at(i), position.at(j));
       // update force[j] based on Newton's third law
       force.at(j).x -= f.x; force.at(j).y -= f.y;
       // accumulate force[i]
@@ -75,7 +75,7 @@ namespace {
 
 void ParticleSOA::update_all(const std::vector<common::point>& acceleration, double dt) {
   // Expect vectors of the same size
-  if (position.size() != velocity.size() || position.size() != acceleration.size()) {
+  if (position.size() != velocity.size() or position.size() != acceleration.size()) {
     throw std::invalid_argument("Mismatch in vector sizes.");
   }
 

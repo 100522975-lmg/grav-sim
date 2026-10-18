@@ -1,8 +1,8 @@
-#include "gravity.hpp"
+//#include "gravity.hpp"
 #include "rebound.hpp"
 #include "point.hpp"
 #include <gtest/gtest.h>
-#include <cmath>
+//#include <cmath>
 
 using namespace common;
 

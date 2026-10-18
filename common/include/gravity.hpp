@@ -16,13 +16,13 @@ namespace common {
         double const pj_pi_y = p_j.y - p_i.y; 
 
         // Continue with the norm (distance) ||p_{j} - p_{i}||: 
-        double norm_pi_pj = std::sqrt(std::pow(pj_pi_x, 2) + std::pow(pj_pi_y, 2));
+        double const norm_pi_pj = std::sqrt(std::pow(pj_pi_x, 2) + std::pow(pj_pi_y, 2));
 
         // In case the distance is 0 because we are calculating the gravity force between a point and itself, 
         // We already know that this force will be 0. So, to avoid dividing by 0, we do the following: 
-        if (norm_pi_pj == 0.0) 
+        if (norm_pi_pj == 0.0) {
             return {0.0, 0.0};
-        
+        }
         // Apply the formula to obtain the gravity force between two points, but only the constant part, not multiplying
         // by (p_{j} - p_{i}) just yet. Therefore, the variable will not be called f_ij, but factor.  
 
