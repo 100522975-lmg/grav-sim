@@ -3,6 +3,7 @@ target_sources(grav-aos PRIVATE
     src/main.cpp
     include/simulation.hpp
     include/particle.hpp
+    src/simulation.cpp
 #    include/file1.hpp
 #    src/file1.cpp
 #    include/file2.hpp

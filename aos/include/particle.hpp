@@ -9,9 +9,9 @@
 //particle struct containing 6 element. The id (asigned once), mass(>0), radius (>0), 
 // position (x,y) of centre, velocity (vx,vy), acceleration (ax,ay).
 struct particle{
-    std::size_t id;
-    double mass;
-    double radius;
+    std::size_t id{};
+    double mass{};
+    double radius{};
     common::point position;
     common::point velocity;
     common::point acceleration;

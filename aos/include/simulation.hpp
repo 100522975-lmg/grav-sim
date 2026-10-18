@@ -12,7 +12,10 @@ void reset_acceleration(std::vector<particle> & particles);
 
 //adds to a and b the gravitational force between them
 //a being the first particle of the pair and b being the second
-void acummulate_forces(std::vector <particle> & particles);
+void accumulate_pair_force(particle & a, particle & b);
+
+//accumulates the force of every pair of particles
+void accumulate_forces(std::vector <particle> & particles);
 
 //converts the accumulated force of every particle into the acceleration using eq 3
 void forces_to_acceleration(std::vector <particle> & particles);
@@ -28,7 +31,7 @@ void update_velocity(particle & p, double time_step);
 void update_position(particle & p, double time_step);
 
 //applies rebound rule against the walls of the enclosure
-void apply_rebound(particle & p,double width, double heigh);
+void apply_rebound(particle & p,double width, double height);
 
 //runs one simulation WITHOUT collisions
 void step(std::vector<particle> & particles, double width, double height, double time_step);
