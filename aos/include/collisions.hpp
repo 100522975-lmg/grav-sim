@@ -1,5 +1,4 @@
 #ifndef AOS_COLLISION_HPP
-#ifndef AOS_COLLISION_HPP
 #define AOS_COLLISION_HPP
 
 #include <cstddef>
@@ -29,8 +28,8 @@ namespace aos {
     std::size_t const n = particles.size();
     for (std::size_t i = 0; i < n; ++i) {
       for (std::size_t j = i + 1; j < n; ++j) {
-        if (common::are_colliding(particles[i].position, particles[i].radius,
-                                  particles[j].position, particles[j].radius)) {
+        if (common::are_colliding(particles.at(i).position, particles.at(i).radius,
+                                  particles.at(j).position, particles.at(j).radius)) {
           return std::make_pair(i, j);
         }
       }
@@ -49,16 +48,16 @@ namespace aos {
 
       auto const [idx_a, idx_b] = *collision;
 
-      common::collider const col_a{particles[idx_a].mass, particles[idx_a].radius, particles[idx_a].id};
-      common::collider const col_b{particles[idx_b].mass, particles[idx_b].radius, particles[idx_b].id};
+      common::collider const col_a{particles.at(idx_a).mass, particles.at(idx_a).radius, particles.at(idx_a).id};
+      common::collider const col_b{particles.at(idx_b).mass, particles.at(idx_b).radius, particles.at(idx_b).id};
 
       if (common::choose_absorber(col_a, col_b)) {
         // Particle A absorbs Particle B
-        merge_particles(particles[idx_a], particles[idx_b]);
+        merge_particles(particles.at(idx_a), particles.at(idx_b));
         particles.erase(particles.begin() + static_cast<std::ptrdiff_t>(idx_b));
       } else {
         // Particle B absorbs Particle A
-        merge_particles(particles[idx_b], particles[idx_a]);
+        merge_particles(particles.at(idx_b), particles.at(idx_a));
         particles.erase(particles.begin() + static_cast<std::ptrdiff_t>(idx_a));
       }
     // After each merge, the vector is modified, so we restart the search for collisions from the beginning.

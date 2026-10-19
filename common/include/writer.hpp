@@ -30,7 +30,7 @@ namespace writer {
     };
 
     struct line_args {
-      double m, r;
+      double m{}, r{};
       common::point p, v;
     };
 

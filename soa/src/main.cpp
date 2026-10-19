@@ -26,8 +26,7 @@ int main(int argc, char ** argv) try {
   const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   // initialize particles
   ParticleSOA particles{particle_data};
-  // Write initial configuration to file
-  const std::string init_file = "init_config.txt";
+  const std::string init_file = "init_config.txt"; // Write initial configuration to file
   writer::write_config(
     writer::write_args {
       progargs.width(),
@@ -40,28 +39,19 @@ int main(int argc, char ** argv) try {
       progargs.num_iterations()
     },
     init_file
-  );
-
-  // force + acceleration init
+  ); // force + acceleration init
   std::vector<common::point> force;
   std::vector<common::point> acceleration; 
-
-  // main loop
-  for (std::size_t i = 0; i < progargs.num_iterations(); ++i) {
+  for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { // main loop
     force = particles.accumulate_force_pairs();
     acceleration = particles.compute_acceleration(force);
-    // update velocity + position 
-    particles.update_all(acceleration, progargs.time_step());
-    // apply rebound
-    common::rebound_effect(particles.position.at(i), particles.velocity.at(i), particles.radius.at(i), common::point{progargs.width(), progargs.height()});
-  }
-
-  // write result to final_config.txt
+    particles.update_all(acceleration, progargs.time_step());// update velocity + position 
+    common::rebound_effect(particles.position.at(i), particles.velocity.at(i), particles.radius.at(i), common::point{progargs.width(), progargs.height()});// apply rebound
+  } // write result to final_config.txt
   const std::string final_path = "final_config.txt";
 } catch (std::exception const & e) {
   std::cerr << "grav-soa: " << e.what() << '\n';
   return EXIT_FAILURE;
 } catch (...) {
   std::cerr << "grav-soa: Unknown exception" << '\n';
-  return EXIT_FAILURE;
-}
+  return EXIT_FAILURE; }
