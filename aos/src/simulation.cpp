@@ -58,7 +58,7 @@ void update_velocity(particle & p, double time_step){
 //eq5
 void update_position(particle & p, double time_step){
     p.position.x+=p.velocity.x*time_step;
-    p.position.y=p.velocity.y*time_step;
+    p.position.y+=p.velocity.y*time_step;
 }
 
 void apply_rebound(particle & p, double width, double height){
