@@ -7,6 +7,7 @@ set(CURRENT_DIR_SRC_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/test_point.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_gravity.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_rebound.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_common.cpp"
 )
 
 add_unit_test_target(
