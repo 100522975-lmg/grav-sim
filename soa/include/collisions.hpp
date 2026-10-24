@@ -11,12 +11,12 @@ namespace soa {
     // have collided or not. 
     [[nodiscard]] inline std::vector<std::size_t> find_collision(ParticleSOA const& particles) {
 
-        std::size_t n = particles.position.size();
+        std::size_t const n = particles.position.size();
 
         // To see whether the particles collide, we will use are_colliding() from the common namespace.
         for (std::size_t i = 0; i < n; i++) {
             for (std::size_t j = i + 1; j < n; j++){
-                if (common::are_colliding(particles.position[i], particles.radius[i],particles.position[j], particles.radius[j])) {
+                if (common::are_colliding(particles.position.at(i), particles.radius.at(i),particles.position.at(j), particles.radius.at(j))) {
                     return {i, j};
                 }   
             }
@@ -29,11 +29,11 @@ namespace soa {
     inline void merge_particle(ParticleSOA &particles, std::size_t absorber,std::size_t absorbed) {
 
         // Add up the masses of both particles
-        particles.mass[absorber] += particles.mass[absorbed];
+        particles.mass.at(absorber) += particles.mass.at(absorbed);
 
         // Modify the velocity of the resulting particle by adding the velocities of the particles that collided. 
-        particles.velocity[absorber].x += particles.velocity[absorbed].x;
-        particles.velocity[absorber].y += particles.velocity[absorbed].y;
+        particles.velocity.at(absorber).x += particles.velocity.at(absorber).x;
+        particles.velocity.at(absorber).y += particles.velocity.at(absorber).y;
 
         // Since the absorbed object no longer exist, we must delete it part by part, as we are using soa- 
         const std::size_t last = particles.id.size() - 1;
@@ -60,15 +60,15 @@ namespace soa {
             std::vector<std::size_t> const collision = find_collision(particles);
 
             // If no collision was found, stop the loop. 
-            if (collision.empty() == true) {break;} 
+            if (collision.empty() ) {break;} 
 
             // Get the indices of the colliding particles.
-            std::size_t const i = collision[0];
-            std::size_t const j = collision[1];
+            std::size_t const i = collision.at(0);
+            std::size_t const j = collision.at(1);
 
             // Get the properties needed to choose the absorber.
-            common::collider const a {particles.mass[i], particles.radius[i], static_cast <std::size_t> (particles.id[i])};
-            common::collider const b{particles.mass[j], particles.radius[j], static_cast <std::size_t> (particles.id[j])};
+            common::collider const a {particles.mass.at(i), particles.radius.at(i), static_cast <std::size_t> (particles.id.at(i))};
+            common::collider const b{particles.mass.at(j), particles.radius.at(j), static_cast <std::size_t> (particles.id.at(j))};
 
             // Merge the absorbed particle into the absorber.
             if (common::choose_absorber(a, b)) {
