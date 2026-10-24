@@ -13,6 +13,7 @@
 #include "common.hpp"
 #include "writer.hpp"
 #include "rebound.hpp"
+#include "collisions.hpp"
 
 int main(int argc, char ** argv) try {
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
@@ -26,7 +27,8 @@ int main(int argc, char ** argv) try {
   const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   // initialize particles
   ParticleSOA particles{particle_data};
-  const std::string init_file = "init_config.txt"; // Write initial configuration to file
+  // Write initial configuration to file
+  const std::string init_file = "init_config.txt"; 
   writer::write_config(
     writer::write_args {
       progargs.width(),
@@ -39,16 +41,35 @@ int main(int argc, char ** argv) try {
       progargs.num_iterations()
     },
     init_file
-  ); // force + acceleration init
+  );
+  // force + acceleration init
   std::vector<common::point> force;
   std::vector<common::point> acceleration; 
   for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { // main loop
+    // compute force and acceleration vectors
     force = particles.accumulate_force_pairs();
     acceleration = particles.compute_acceleration(force);
-    particles.update_all(acceleration, progargs.time_step());// update velocity + position 
-    common::rebound_effect(particles.position.at(i), particles.velocity.at(i), particles.radius.at(i), common::point{progargs.width(), progargs.height()});// apply rebound
-  } // write result to final_config.txt
-  const std::string final_path = "final_config.txt";
+    // Update velocity and position
+    particles.update_all(acceleration, progargs.time_step()); 
+    // apply rebound
+    common::rebound_effect(particles.position.at(i), particles.velocity.at(i), particles.radius.at(i), common::point{progargs.width(), progargs.height()});
+    soa::resolve_collisions(particles);
+  } 
+  // write result to final_config.txt
+  const std::string final_file = "final_config.txt";
+  writer::write_config(
+    writer::write_args {
+      progargs.width(),
+      progargs.height(),
+      progargs.time_step(),
+      std::span<double>{particles.mass},
+      std::span<double>{particles.radius},
+      std::span<common::point>{particles.position},
+      std::span<common::point>{particles.velocity},
+      progargs.num_iterations()
+    },
+    final_file
+  );
 } catch (std::exception const & e) {
   std::cerr << "grav-soa: " << e.what() << '\n';
   return EXIT_FAILURE;
