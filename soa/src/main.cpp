@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
-#include <print>
 #include <span>
 #include <string>
 #include <vector>
@@ -35,13 +34,9 @@ int main(int argc, char ** argv) try {
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
   common::program_arguments const progargs{vecargs};
-  std::println("grav-soa:");
-  std::println("\tnum_iterations: {}\n\twidth: {}\n\theight: {}\n\ttime_step: {}",
-               progargs.num_iterations(), progargs.width(), progargs.height(),
-               progargs.time_step());
-  const std::string path = "inputs/input.txt";
-  const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   // initialize particles
+  const std::string path = "input/input1.txt";
+  const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   ParticleSOA particles{particle_data};
   // Write initial configuration to file
   const std::string init_file = "init_config.txt"; 
@@ -56,7 +51,11 @@ int main(int argc, char ** argv) try {
     // Update velocity and position
     update::all(particles, acceleration, progargs.time_step()); 
     // apply rebound
-    common::rebound_effect(particles.position.at(i), particles.velocity.at(i), particles.radius.at(i), common::point{progargs.width(), progargs.height()});
+    const auto rebound_args = std::views::zip(particles.position, particles.velocity, particles.radius);
+    for (auto [p,v,r] : rebound_args) {
+    common::rebound_effect(p, v, r, common::point{progargs.width(), progargs.height()});
+    }
+    // find collisions
     physics::resolve_collisions(particles);
   } 
   // write result to final_config.txt
