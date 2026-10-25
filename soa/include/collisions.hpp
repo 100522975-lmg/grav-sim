@@ -6,7 +6,7 @@
 #include "soa.hpp"
 #include "collision.hpp"
 
-namespace soa {
+namespace physics {
     // Create the function find_collision(), which will determine whether two particles
     // have collided or not. 
     [[nodiscard]] inline std::vector<std::size_t> find_collision(ParticleSOA const& particles) {

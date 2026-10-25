@@ -10,6 +10,7 @@
 
 // user includes
 #include "soa.hpp"
+#include "simulation.hpp"
 #include "common.hpp"
 #include "writer.hpp"
 #include "rebound.hpp"
@@ -50,13 +51,13 @@ int main(int argc, char ** argv) try {
   std::vector<common::point> acceleration; 
   for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { // main loop
     // compute force and acceleration vectors
-    force = particles.accumulate_force_pairs();
-    acceleration = particles.compute_acceleration(force);
+    force = physics::accumulate_force_pairs(particles);
+    acceleration = physics::compute_acceleration(particles, force);
     // Update velocity and position
-    particles.update_all(acceleration, progargs.time_step()); 
+    update::all(particles, acceleration, progargs.time_step()); 
     // apply rebound
     common::rebound_effect(particles.position.at(i), particles.velocity.at(i), particles.radius.at(i), common::point{progargs.width(), progargs.height()});
-    soa::resolve_collisions(particles);
+    physics::resolve_collisions(particles);
   } 
   // write result to final_config.txt
   const std::string final_file = "final_config.txt";
