@@ -7,7 +7,7 @@ std::vector<common::point> physics::accumulate_force_pairs(const ParticleSOA& pa
   std::vector<common::point> force(n, {0.0, 0.0});
 
   // zip std::vector instances
-  auto particle_tuples = std::views::zip(particles.mass, particles.position, force);
+  const auto particle_tuples = std::views::zip(particles.mass, particles.position, force);
 
   for (auto [i, particle_i] : particle_tuples | std::views::enumerate) {
     auto [m_i, p_i, f_i] = particle_i;
@@ -29,13 +29,13 @@ std::vector<common::point> physics::accumulate_force_pairs(const ParticleSOA& pa
 }
 
 std::vector<common::point> physics::compute_acceleration(const ParticleSOA & particles, const std::vector<common::point>& force) { 
-  std::size_t n = particles.id.size();
+  const std::size_t n = particles.id.size();
   std::vector<common::point> acceleration(n);
   
-  auto fma_tuple = std::views::zip(force, particles.mass, acceleration);
+  const auto fma_tuple = std::views::zip(force, particles.mass, acceleration);
   
   for (auto [f,m,a] : fma_tuple) {
-    double mass_reciprocal = 1/m;
+    const double mass_reciprocal = 1/m;
     a.x = f.x * mass_reciprocal;
     a.y = f.y * mass_reciprocal;
   }
@@ -61,7 +61,7 @@ void update::all(ParticleSOA & particles, const std::vector<common::point>& acce
     throw std::invalid_argument("Mismatch in vector sizes.");
   }
   
-  auto pva_tuple = std::views::zip(particles.position, particles.velocity, acceleration);
+  const auto pva_tuple = std::views::zip(particles.position, particles.velocity, acceleration);
   for (auto [p,v,a] : pva_tuple)
   {
     update_velocity(v, a, dt);
