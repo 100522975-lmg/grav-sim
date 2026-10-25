@@ -5,6 +5,7 @@ set(COMMON_SRC_FILES
 
 set(CURRENT_DIR_SRC_FILES 
   "${CMAKE_CURRENT_SOURCE_DIR}/test-particle.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_collisions.cpp"
 )
 
 add_unit_test_target(
