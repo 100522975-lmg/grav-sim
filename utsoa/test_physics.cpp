@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <cmath>
 #include <vector>
 
 #include "simulation.hpp"
@@ -37,7 +36,7 @@ TEST(AccumulateForcePairs, EmptyInputReturnsEmptyForces) {
 TEST(AccumulateForcePairs, SingleParticleHasZeroForce) {
   const auto p = make_particles({5.0}, {{1.0, 2.0}});
   const auto f = physics::accumulate_force_pairs(p);
-  ASSERT_EQ(f.size(), 1u);
+  ASSERT_EQ(f.size(), 1U);
   EXPECT_DOUBLE_EQ(f.at(0).x, 0.0);
   EXPECT_DOUBLE_EQ(f.at(0).y, 0.0);
 }
@@ -46,7 +45,7 @@ TEST(AccumulateForcePairs, OutputSizeMatchesParticleCount) {
   const auto p = make_particles({1, 2, 3, 4},
                                 {{0, 0}, {1, 0}, {0, 1}, {1, 1}});
   const auto f = physics::accumulate_force_pairs(p);
-  EXPECT_EQ(f.size(), 4u);
+  EXPECT_EQ(f.size(), 4U);
 }
 
 TEST(AccumulateForcePairs, TwoParticlesMatchPairForce) {
@@ -75,12 +74,12 @@ TEST(AccumulateForcePairs, ThreeParticlesMatchSumOfPairwiseForces) {
   const auto p = make_particles(m, pos);
 
   const auto f = physics::accumulate_force_pairs(p);
-  ASSERT_EQ(f.size(), 3u);
+  ASSERT_EQ(f.size(), 3U);
 
   for (std::size_t i = 0; i < 3; ++i) {
     double ex = 0.0, ey = 0.0;
     for (std::size_t j = 0; j < 3; ++j) {
-      if (i == j) continue;
+      if (i == j) {continue;}
       const auto pf = common::pair_force(m.at(i), m.at(j), pos.at(i), pos.at(j));
       ex += pf.x;
       ey += pf.y;
@@ -124,7 +123,7 @@ TEST(ComputeAcceleration, DividesForceByMass) {
 
   const auto a = physics::compute_acceleration(p, force);
 
-  ASSERT_EQ(a.size(), 2u);
+  ASSERT_EQ(a.size(), 2U);
   EXPECT_DOUBLE_EQ(a.at(0).x, 3.0);
   EXPECT_DOUBLE_EQ(a.at(0).y, -4.0);
   EXPECT_DOUBLE_EQ(a.at(1).x, 2.5);
@@ -140,7 +139,7 @@ TEST(ComputeAcceleration, EmptyInputAndZeroForce) {
   const auto p = make_particles({3.0}, {{0, 0}});
   const std::vector<common::point> zero_force{{0.0, 0.0}};
   const auto a = physics::compute_acceleration(p, zero_force);
-  ASSERT_EQ(a.size(), 1u);
+  ASSERT_EQ(a.size(), 1U);
   EXPECT_DOUBLE_EQ(a.at(0).x, 0.0);
   EXPECT_DOUBLE_EQ(a.at(0).y, 0.0);
 }
