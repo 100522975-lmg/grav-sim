@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
-#include <print>
 #include <span>
 #include <vector>
 
@@ -39,12 +38,7 @@ int main(int argc, char ** argv) try {
   // Parse CLI args
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
-  common::program_arguments const progargs{vecargs};
-
-  std::println("grav-aos:");
-  std::println("\tnum_iterations: {}\n\twidth: {}\n\theight: {}\n\ttime_step: {}",
-               progargs.num_iterations(), progargs.width(), progargs.height(),
-               progargs.time_step());             
+  common::program_arguments const progargs{vecargs};            
   
   //read valid particles fo input, the id of each one is its position
   auto const rows=read_particles("input/input.txt",progargs.width(),progargs.height());

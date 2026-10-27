@@ -25,11 +25,15 @@ void forces_to_acceleration(std::vector <particle> & particles);
 void compute_acceleration(std::vector <particle> & particles);
 
 //update velocity usin eq 4
-void update_velocity(particle & p, double time_step);
-
+inline void update_velocity(particle & p, double time_step){
+    p.velocity.x+=p.acceleration.x*time_step;
+    p.velocity.y+=p.acceleration.y*time_step;
+}
 //updates position using eq 5
-void update_position(particle & p, double time_step);
-
+inline void update_position(particle & p, double time_step){
+    p.position.x+=p.velocity.x*time_step;
+    p.position.y+=p.velocity.y*time_step;
+}
 //applies rebound rule against the walls of the enclosure
 void apply_rebound(particle & p,double width, double height);
 

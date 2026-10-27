@@ -49,17 +49,7 @@ void compute_acceleration(std::vector<particle> & particles){
     forces_to_acceleration(particles);
 }
 
-//eq 4
-void update_velocity(particle & p, double time_step){
-    p.velocity.x+=p.acceleration.x*time_step;
-    p.velocity.y+=p.acceleration.y*time_step;
-}
 
-//eq5
-void update_position(particle & p, double time_step){
-    p.position.x+=p.velocity.x*time_step;
-    p.position.y+=p.velocity.y*time_step;
-}
 
 void apply_rebound(particle & p, double width, double height){
     //rebound_effect checks both axes at onces and updates velocity and position
