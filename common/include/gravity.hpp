@@ -16,7 +16,9 @@ namespace common {
         double const pj_pi_y = p_j.y - p_i.y; 
 
         // Continue with the norm (distance) ||p_{j} - p_{i}||: 
-        double const norm_pi_pj = std::sqrt(std::pow(pj_pi_x, 2) + std::pow(pj_pi_y, 2));
+        double const dist_sq = pj_pi_x * pj_pi_x + pj_pi_y * pj_pi_y;
+        double const norm_pi_pj = std::sqrt(dist_sq);
+        double const factor = constants::G * mass_i * mass_j / (dist_sq * norm_pi_pj);
 
         // In case the distance is 0 because we are calculating the gravity force between a point and itself, 
         // We already know that this force will be 0. So, to avoid dividing by 0, we do the following: 
@@ -25,8 +27,6 @@ namespace common {
         }
         // Apply the formula to obtain the gravity force between two points, but only the constant part, not multiplying
         // by (p_{j} - p_{i}) just yet. Therefore, the variable will not be called f_ij, but factor.  
-
-        double const factor = constants::G * mass_i * mass_j / std::pow(norm_pi_pj, 3);
 
         // Now, since multiplying a vector (in this case a point with two coordinates) by a scalar means to 
         // multiply each entry of the vector by said scalar, the final result is: 
