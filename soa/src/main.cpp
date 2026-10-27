@@ -35,7 +35,7 @@ int main(int argc, char ** argv) try {
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
   common::program_arguments const progargs{vecargs};
   // initialize particles
-  const std::string path = "input/input1.txt";
+  const std::string path = "input/input.txt";
   const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   ParticleSOA particles{particle_data};
   // Write initial configuration to file
@@ -44,6 +44,7 @@ int main(int argc, char ** argv) try {
   // force + acceleration init
   std::vector<common::point> force;
   std::vector<common::point> acceleration; 
+  physics::resolve_collisions(particles);
   for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { // main loop
     // compute force and acceleration vectors
     force = physics::accumulate_force_pairs(particles);

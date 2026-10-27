@@ -10,13 +10,13 @@ DELTA=0.1
 
 # 1K
 if [-d "$INPUT_DIR"]; then
-    mv "$INPUT_DIR/input1K.txt" "$INPUT_DIR/input1.txt"
+    mv "$INPUT_DIR/input1K.txt" "$INPUT_DIR/input.txt"
     if [-d "$BUILD_DIR"]; then
         perf stat "$BUILD_DIR/grav-soa" $NUM_ITER $WIDTH $HEIGHT $DELTA
     else
         echo "Not found: $BUILD_DIR"
     fi
-    mv "$INPUT_DIR/input1.txt" "$INPUT_DIR/input1K.txt"
+    mv "$INPUT_DIR/input.txt" "$INPUT_DIR/input1K.txt"
 else
     echo "Not found: $INPUT_DIR"
 fi
