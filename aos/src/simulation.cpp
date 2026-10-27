@@ -5,7 +5,8 @@
 
 void reset_acceleration(std::vector<particle> & particles){
     for (auto & p : particles){
-        p.acceleration=common::point{};
+        p.acceleration.x=0.0;
+        p.acceleration.y=0.0;
     }
 }
 
@@ -14,8 +15,20 @@ void accumulate_forces(std::vector<particle> & particles){
     const std::size_t n = particles.size();
     //visit every pair exactly once
     for(std::size_t i=0; i<n;++i){
+        auto & p_i=particles.at(i);
+        const double inv_m_i = 1.0/p_i.mass;
         for(std::size_t j=i+1;j<n;++j){
-            accumulate_pair_force(particles.at(i),particles.at(j));
+            auto & p_j=particles.at(j);
+            
+            //compute force exerted on p_i by p_j
+            common::point const force=common::pair_force(p_i.mass,p_j.mass,p_i.position,p_j.position);
+            //convert force to acceleration p_i
+            p_i.acceleration.x+=force.x*inv_m_i;
+            p_i.acceleration.y+=force.y*inv_m_i;
+            //p_j acceleration
+            const double inv_m_j=1.0/p_j.mass;
+            p_j.acceleration.x+=force.x*inv_m_j;
+            p_j.acceleration.y+=force.y*inv_m_j;
         }
     }
 }

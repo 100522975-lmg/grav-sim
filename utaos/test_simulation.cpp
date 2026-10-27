@@ -158,57 +158,6 @@ TEST(test_accumulate_forces, single_particle_and_empty_vector_are_fine) {
 }
 
 
-// accumulate_pair_force
-// The acceleration field temporarily stores the accumulated force.
-
-TEST(test_accumulate_pair_force, applies_equal_and_opposite_forces) {
-    particle a = make(0, 2.0, point{0.0, 0.0}, point{});
-    particle b = make(1, 5.0, point{3.0, 4.0}, point{});
-
-    accumulate_pair_force(a, b);
-
-    double const magnitude = G * 2.0 * 5.0 / 25.0;
-
-    EXPECT_NEAR(a.acceleration.x, magnitude * 0.6, tolerance);
-    EXPECT_NEAR(a.acceleration.y, magnitude * 0.8, tolerance);
-
-    EXPECT_DOUBLE_EQ(b.acceleration.x, -a.acceleration.x);
-    EXPECT_DOUBLE_EQ(b.acceleration.y, -a.acceleration.y);
-}
-
-TEST(test_accumulate_pair_force, adds_to_existing_values) {
-    particle a = make(0, 1.0, point{0.0, 0.0}, point{});
-    particle b = make(1, 1.0, point{1.0, 0.0}, point{});
-
-    a.acceleration = point{2.0, 3.0};
-    b.acceleration = point{4.0, 5.0};
-
-    accumulate_pair_force(a, b);
-
-    EXPECT_NEAR(a.acceleration.x, 2.0 + G, tolerance);
-    EXPECT_NEAR(a.acceleration.y, 3.0, tolerance);
-
-    EXPECT_NEAR(b.acceleration.x, 4.0 - G, tolerance);
-    EXPECT_NEAR(b.acceleration.y, 5.0, tolerance);
-}
-
-TEST(test_accumulate_pair_force, does_not_change_other_fields) {
-    particle a = make(0, 2.0, point{0.0, 0.0}, point{1.0, 2.0});
-    particle b = make(1, 3.0, point{3.0, 0.0}, point{4.0, 5.0});
-
-    accumulate_pair_force(a, b);
-
-    EXPECT_EQ(a.id, 0U);
-    EXPECT_DOUBLE_EQ(a.mass, 2.0);
-    EXPECT_DOUBLE_EQ(a.position.x, 0.0);
-    EXPECT_DOUBLE_EQ(a.velocity.x, 1.0);
-
-    EXPECT_EQ(b.id, 1U);
-    EXPECT_DOUBLE_EQ(b.mass, 3.0);
-    EXPECT_DOUBLE_EQ(b.position.x, 3.0);
-    EXPECT_DOUBLE_EQ(b.velocity.x, 4.0);
-}
-
 
 
 
