@@ -3,10 +3,10 @@
 BUILD_DIR="out/build/clang-tidy/soa/Release"
 INPUT_DIR="input"
 
-WIDTH=100
-HEIGHT=100
-NUM_ITER=20
-DELTA=0.1
+WIDTH=1000
+HEIGHT=1000
+NUM_ITER=500
+DELTA=0.25
 
 # 1K
 if [ -d "$INPUT_DIR" ]; then

@@ -3,16 +3,16 @@
 BUILD_DIR="out/build/clang-tidy/aos/Release"
 INPUT_DIR="input"
 
-WIDTH=100
-HEIGHT=100
-NUM_ITER=20
-DELTA=0.1
+WIDTH=1000
+HEIGHT=1000
+NUM_ITER=500
+DELTA=0.25
 
 # 1K
 if [ -d "$INPUT_DIR" ]; then
     mv "$INPUT_DIR/input1K.txt" "$INPUT_DIR/input.txt"
     if [ -d "$BUILD_DIR" ]; then
-        perf stat "$BUILD_DIR/grav-soa" $NUM_ITER $WIDTH $HEIGHT $DELTA
+        perf stat "$BUILD_DIR/grav-aos" $NUM_ITER $WIDTH $HEIGHT $DELTA
     else
         echo "Not found: $BUILD_DIR"
     fi
