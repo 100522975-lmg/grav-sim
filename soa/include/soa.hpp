@@ -5,7 +5,7 @@
 #include <vector>
 
 struct ParticleSOA {
-    std::vector<int> id;
+    std::vector<std::size_t> id;
     std::vector<double> mass;
     std::vector<double> radius;
     std::vector<common::point> position;

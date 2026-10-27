@@ -14,22 +14,20 @@
 #include "simulation.hpp"
 #include "writer.hpp"
 
-
-
-
 namespace vw = std::views;
 
 namespace{
   [[nodiscard]] auto transform_particles(const std::vector<particle>& particles, const common::program_arguments& progargs) {
     
     return writer::write_args {
-      progargs.width(),
-      progargs.height(),
-      progargs.time_step(),
+      particles | vw::transform(&particle::id),
       particles | vw::transform(&particle::mass),
       particles | vw::transform(&particle::radius),
       particles | vw::transform(&particle::position),
       particles | vw::transform(&particle::velocity),
+      progargs.width(),
+      progargs.height(),
+      progargs.time_step(),
       progargs.num_iterations()
     };
   }

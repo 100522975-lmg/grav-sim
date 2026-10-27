@@ -18,13 +18,14 @@
 namespace {
   [[nodiscard]] auto generate_write_args(const common::program_arguments& progargs, ParticleSOA& particles) {
     return writer::write_args {
-        progargs.width(),
-        progargs.height(),
-        progargs.time_step(),
+        std::span<std::size_t>{particles.id},
         std::span<double>{particles.mass},
         std::span<double>{particles.radius},
         std::span<common::point>{particles.position},
         std::span<common::point>{particles.velocity},
+        progargs.width(),
+        progargs.height(),
+        progargs.time_step(),
         progargs.num_iterations(),
     };
   }
