@@ -11,7 +11,8 @@ ParticleSOA::ParticleSOA(const std::vector<std::vector<double>>& particles) {
   velocity.reserve(n);
 
   // Populate each vector with input data
-  for (int i = 0; const auto& row : particles) {
+  for (std::size_t i = 1; const auto& row : particles) {
+    if (row.empty()) { i++; continue; } // skip bad particle
     id.push_back(i++);
     mass.push_back(row.at(0));
     radius.push_back(row.at(1));
