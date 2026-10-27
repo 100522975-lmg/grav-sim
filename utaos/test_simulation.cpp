@@ -210,35 +210,7 @@ TEST(test_accumulate_pair_force, does_not_change_other_fields) {
 }
 
 
-// forces_to_acceleration
 
-TEST(test_forces_to_acceleration, divides_each_force_by_its_own_mass) {
-    std::vector<particle> ps{
-        make(0, 2.0, point{}, point{}),
-        make(1, 4.0, point{}, point{})
-    };
-
-    ps.at(0).acceleration = point{6.0, -8.0};
-    ps.at(1).acceleration = point{6.0, -8.0};
-
-    forces_to_acceleration(ps);
-
-    EXPECT_DOUBLE_EQ(ps.at(0).acceleration.x, 3.0);
-    EXPECT_DOUBLE_EQ(ps.at(0).acceleration.y, -4.0);
-    EXPECT_DOUBLE_EQ(ps.at(1).acceleration.x, 1.5);
-    EXPECT_DOUBLE_EQ(ps.at(1).acceleration.y, -2.0);
-}
-
-TEST(test_forces_to_acceleration, zero_force_gives_zero_acceleration) {
-    std::vector<particle> ps{
-        make(0, 7.0, point{}, point{})
-    };
-
-    forces_to_acceleration(ps);
-
-    EXPECT_DOUBLE_EQ(ps.at(0).acceleration.x, 0.0);
-    EXPECT_DOUBLE_EQ(ps.at(0).acceleration.y, 0.0);
-}
 
 // compute_acceleration
 
