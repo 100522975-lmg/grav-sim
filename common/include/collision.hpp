@@ -6,6 +6,8 @@
 #include "point.hpp"
 
 namespace common {
+  // stores the indices of two colliding objects
+  struct CollisionPair { std::size_t i, j; };
 
   // The properties of an object that decide which one absorbs the other
   struct collider {

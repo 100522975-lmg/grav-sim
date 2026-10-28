@@ -1,69 +1,47 @@
-#ifndef AOS_COLLISION_HPP
-#define AOS_COLLISION_HPP
-
-#include <cstddef>
-#include <optional>
-#include <utility>
-#include <vector>
+#ifndef COLLISIONS_HPP
+#define COLLISIONS_HPP
 
 #include "collision.hpp"
 #include "particle.hpp"
-
+#include <gsl/util> // gsl::at()
+                    
 namespace aos {
-
-  /// Combines 'absorbed' into 'absorber' 
-  inline void merge_particles(particle & absorber, particle const & absorbed) {
-    absorber.mass += absorbed.mass;
-    // Radius and position remain those of the absorber
-    absorber.velocity.x += absorbed.velocity.x;
-    absorber.velocity.y += absorbed.velocity.y;
-    // Acceleration will be recomputed in the next gravity pass
-    absorber.acceleration = common::point{0.0, 0.0};
-  }
-
-  /// Scans particle pairs in lexicographic order of their identifiers.
-  /// Returns indices (i, j) of the first colliding pair found, or std::nullopt.
-  [[nodiscard]] inline std::optional<std::pair<std::size_t, std::size_t>>
-  find_collision(std::vector<particle> const & particles) {
+  [[nodiscard]] inline std::vector<common::CollisionPair> find_collisions(std::span<const particle> const particles) {
     std::size_t const n = particles.size();
-    for (std::size_t i = 0; i < n; ++i) {
-      for (std::size_t j = i + 1; j < n; ++j) {
-        if (common::are_colliding(particles.at(i).position, particles.at(i).radius,
-                                  particles.at(j).position, particles.at(j).radius)) {
-          return std::make_pair(i, j);
+    std::vector<common::CollisionPair> pairs;  
+    pairs.reserve(static_cast<std::size_t>(static_cast<double>(n)*0.05));
+    
+    // find all colliding pairs in lexicographic order
+    for (auto [i, p_i] : std::views::enumerate(particles)) {
+      for (auto [j, p_j] : particles | std::views::enumerate | std::views::drop(i+1)) {
+        if (common::are_colliding(p_i.position, p_i.radius, p_j.position, p_j.radius)) [[unlikely]] {
+          pairs.emplace_back(i,j);
         }
       }
     }
-    return std::nullopt;
+    return pairs;
   }
 
-  /// Resolves all collisions in the system.
-  /// Restarts scan from the lowest-identifier remaining object after each resolution.
-  inline void resolve_collisions(std::vector<particle> & particles) {
-    while (true) {
-      auto const collision = find_collision(particles);
-      if (!collision.has_value()) {
-        break; 
-      }
-
-      auto const [idx_a, idx_b] = *collision;
-
-      common::collider const col_a{particles.at(idx_a).mass, particles.at(idx_a).radius, particles.at(idx_a).id};
-      common::collider const col_b{particles.at(idx_b).mass, particles.at(idx_b).radius, particles.at(idx_b).id};
-
-      if (common::choose_absorber(col_a, col_b)) {
-        // Particle A absorbs Particle B
-        merge_particles(particles.at(idx_a), particles.at(idx_b));
-        particles.erase(particles.begin() + static_cast<std::ptrdiff_t>(idx_b));
+  inline void resolve_collisions(std::span<particle> const particles) {
+    const auto collisions = find_collisions(particles);
+    for (const auto c : collisions) {
+      auto p_i = particles.subspan(c.i,1).front();
+      auto p_j = particles.subspan(c.j,1).front();
+      common::collider const a{p_i.mass, p_i.radius, p_i.id};
+      common::collider const b{p_j.mass, p_j.radius, p_j.id};
+      if (common::choose_absorber(a,b)) {
+        p_j.id = constants::UNUSED_ID;
+        p_i.mass = p_i.mass + p_j.mass;
+        p_i.velocity.x = p_i.velocity.x + p_j.velocity.x;
+        p_i.velocity.y = p_i.velocity.y + p_j.velocity.y;
       } else {
-        // Particle B absorbs Particle A
-        merge_particles(particles.at(idx_b), particles.at(idx_a));
-        particles.erase(particles.begin() + static_cast<std::ptrdiff_t>(idx_a));
+        p_i.id = constants::UNUSED_ID;
+        p_j.mass = p_j.mass + p_i.mass;
+        p_j.velocity.x = p_j.velocity.x + p_i.velocity.x;
+        p_j.velocity.y = p_j.velocity.y + p_i.velocity.y;
       }
-    // After each merge, the vector is modified, so we restart the search for collisions from the beginning.
     }
   }
+}
 
-} // namespace aos
-
-#endif 
+#endif

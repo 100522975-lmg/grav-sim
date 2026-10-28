@@ -9,7 +9,7 @@ void ParticleSOA::remove_unused() {
   const auto zipped = std::views::zip(id, mass, radius, position, velocity);
   const auto new_end = std::ranges::remove_if(zipped, [](const auto& particle_tuple) {
   const auto& [current_id, mass, radius, position, velocity] = particle_tuple;
-    return current_id == unused_id;
+    return current_id == constants::UNUSED_ID;
   }).begin();
 
   const auto new_size = static_cast<std::size_t>(std::distance(zipped.begin(), new_end));

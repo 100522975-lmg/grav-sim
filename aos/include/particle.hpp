@@ -1,14 +1,15 @@
 #ifndef AOS_PARTICLE_HPP
 #define AOS_PARTICLE_HPP
 
-#include <cstddef>
 #include <vector>
+#include <ranges>
 
 #include "point.hpp"
+#include "common.hpp"
 
 //particle struct containing 6 element. The id (asigned once), mass(>0), radius (>0), 
 // position (x,y) of centre, velocity (vx,vy), acceleration (ax,ay).
-struct particle{
+struct particle {
     std::size_t id{};
     double mass{};
     double radius{};
@@ -23,6 +24,12 @@ inline particle make_particle(std::vector<double> const & row, std::size_t id){
     common::point const velocity{row.at(4),row.at(5)};
     //acceleration starts at (0,0) and is recomputed every iteration
     return particle{id,row.at(0),row.at(1),position,velocity,common::point{}};
+}
+
+inline void remove_unused(std::vector<particle> & particles) {
+    std::erase_if(particles, [](particle const& p) {
+        return p.id == constants::UNUSED_ID;
+    });    
 }
 
 #endif

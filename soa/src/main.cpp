@@ -29,6 +29,24 @@ namespace {
         particles.id.size(),
     };
   }
+
+  inline void step(ParticleSOA & particles, std::vector<common::point> & force, std::vector<common::point>& acceleration, common::program_arguments const & progargs) {
+    const auto w = progargs.width();
+    const auto h = progargs.height();
+    // compute force and acceleration vectors
+    force = physics::accumulate_force_pairs(particles);
+    acceleration = physics::compute_acceleration(particles, force);
+    // Update velocity and position
+    update::all(particles, acceleration, progargs.time_step()); 
+    // apply rebound
+    const auto rebound_args = std::views::zip(particles.position, particles.velocity, particles.radius);
+    for (auto [p,v,r] : rebound_args) {
+      common::rebound_effect(p, v, r, common::point{w,h});
+    }
+    // find collisions
+    physics::resolve_collisions(particles);
+    particles.remove_unused();
+  }
 }
 
 int main(int argc, char ** argv) try {
@@ -47,20 +65,9 @@ int main(int argc, char ** argv) try {
   // force + acceleration init
   std::vector<common::point> force;
   std::vector<common::point> acceleration; 
-  for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { // main loop
-    // compute force and acceleration vectors
-    force = physics::accumulate_force_pairs(particles);
-    acceleration = physics::compute_acceleration(particles, force);
-    // Update velocity and position
-    update::all(particles, acceleration, progargs.time_step()); 
-    // apply rebound
-    const auto rebound_args = std::views::zip(particles.position, particles.velocity, particles.radius);
-    for (auto [p,v,r] : rebound_args) {
-    common::rebound_effect(p, v, r, common::point{progargs.width(), progargs.height()});
-    }
-    // find collisions
-    physics::resolve_collisions(particles);
-    particles.remove_unused();
+  // main loop calls inlined step function with all functionality
+  for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { 
+    step(particles, force, acceleration, progargs);
   } 
   // write result to final_config.txt
   const std::string final_file = "final_config.txt";

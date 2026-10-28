@@ -3,9 +3,11 @@
 
 #include <string> 
 #include <vector>
+#include <limits>
 
 namespace constants {
     inline constexpr double G = 6.67430e-11;
+    inline constexpr std::size_t UNUSED_ID = std::numeric_limits<std::size_t>::max();
 }
 
 std::vector<double> parse_particle_line(const std::string& line);

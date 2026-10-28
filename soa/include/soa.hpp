@@ -2,10 +2,9 @@
 #define SOA_HPP
 
 #include "point.hpp"
+#include "common.hpp"
 #include <vector>
 #include <limits>
-
-inline constexpr std::size_t unused_id = std::numeric_limits<std::size_t>::max();
 
 struct ParticleSOA {
     std::vector<std::size_t> id;

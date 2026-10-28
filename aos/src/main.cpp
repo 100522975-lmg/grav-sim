@@ -34,15 +34,14 @@ namespace{
 } //anonymous namespace
 
 int main(int argc, char ** argv) try {
-  // Parse CLI args
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
   common::program_arguments const progargs{vecargs};            
   // Cache simulation parameters.
-    auto const width = progargs.width();
-    auto const height = progargs.height();
-    auto const time_step = progargs.time_step();
-    auto const iterations = progargs.num_iterations();
+  auto const width = progargs.width();
+  auto const height = progargs.height();
+  auto const time_step = progargs.time_step();
+  auto const iterations = progargs.num_iterations();
   //read valid particles fo input, the id of each one is its position
   auto const rows=read_particles("input/input.txt",width,height);
   std::vector<particle> particles;
@@ -57,14 +56,15 @@ int main(int argc, char ** argv) try {
   };
   //resolve collisions
   aos::resolve_collisions(particles);
+  remove_unused(particles);
   save("init_config_aos.txt");
   //run simulation
   for(std::size_t i=0;i<iterations;++i){
-    step(particles,width,height,time_step);
+    step(particles, width, height, time_step);
     aos::resolve_collisions(particles);
+    remove_unused(particles);
   }
   save("final_config_aos.txt");
-  // Error handling
 } catch (std::exception const & e) {
   std::cerr << "grav-aos: " << e.what() << '\n';
   return EXIT_FAILURE;
