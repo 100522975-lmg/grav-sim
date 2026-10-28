@@ -39,13 +39,14 @@ int main(int argc, char ** argv) try {
   const std::string path = "input/input.txt";
   const auto particle_data = read_particles(path, progargs.width(), progargs.height());
   ParticleSOA particles{particle_data};
+  physics::resolve_collisions(particles);
+  particles.remove_unused();
   // Write initial configuration to file
   const std::string init_file = "init_config.txt"; 
   writer::write_config(generate_write_args(progargs, particles), init_file);
   // force + acceleration init
   std::vector<common::point> force;
   std::vector<common::point> acceleration; 
-  physics::resolve_collisions(particles);
   for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { // main loop
     // compute force and acceleration vectors
     force = physics::accumulate_force_pairs(particles);
@@ -59,6 +60,7 @@ int main(int argc, char ** argv) try {
     }
     // find collisions
     physics::resolve_collisions(particles);
+    particles.remove_unused();
   } 
   // write result to final_config.txt
   const std::string final_file = "final_config.txt";

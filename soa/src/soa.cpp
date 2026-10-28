@@ -1,4 +1,26 @@
 #include "soa.hpp"
+#include <algorithm>
+#include <utility>
+#include <ranges>
+
+// Remove unused particles from the end
+void ParticleSOA::remove_unused() {
+  if (id.empty()) return;
+
+  auto zipped = std::views::zip(id, mass, radius, position, velocity);
+  auto new_end = std::ranges::remove_if(zipped, [](const auto& particle_tuple) {
+    const auto& [current_id, mass, radius, position, velocity] = particle_tuple;
+    return current_id == unused_id;
+  }).begin();
+
+  const std::size_t new_size = static_cast<std::size_t>(std::distance(zipped.begin(), new_end));
+
+  id.resize(new_size);
+  mass.resize(new_size);
+  radius.resize(new_size);
+  position.resize(new_size);
+  velocity.resize(new_size);
+}
 
 // Take Nx6 input matrix and construct SOA
 ParticleSOA::ParticleSOA(const std::vector<std::vector<double>>& particles) {
@@ -11,7 +33,7 @@ ParticleSOA::ParticleSOA(const std::vector<std::vector<double>>& particles) {
   velocity.reserve(n);
 
   // Populate each vector with input data
-  for (std::size_t i = 1; const auto& row : particles) {
+  for (std::size_t i = 0; const auto& row : particles) {
     if (row.empty()) { i++; continue; } // skip bad particle
     id.push_back(i++);
     mass.push_back(row.at(0));

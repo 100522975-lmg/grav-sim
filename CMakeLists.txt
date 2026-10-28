@@ -19,6 +19,14 @@ target_compile_options(project_warnings INTERFACE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wsign-conversion>
 )
 
+# USER ADDED
+add_library(project_optimizations INTERFACE)
+target_compile_options(project_optimizations INTERFACE
+    $<$<CONFIG:Release>:$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3 -ffast-math>>
+    $<$<CONFIG:Release>:$<$<CXX_COMPILER_ID:MSVC>:/O2 /fp:fast>>
+)
+
+
 # Fetch Microsoft GSL and GoogleTest
 include(FetchContent)
 
