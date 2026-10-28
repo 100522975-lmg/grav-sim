@@ -32,8 +32,8 @@ void physics::resolve_collisions(ParticleSOA & particles) {
     std::size_t i = c.i;
     std::size_t j = c.j;
     if (*(id+i) == unused_id || *(id+j) == unused_id) continue;
-    const common::collider a {*(mass+i), *(radius+i), i};
-    const common::collider b {*(mass+j), *(radius+j), j};
+    const common::collider a {*(mass+i), *(radius+i), *(id+i)};
+    const common::collider b {*(mass+j), *(radius+j), *(id+j)};
     if (common::choose_absorber(a,b)) {
       *(id+j) = unused_id;
       *(mass+i) = *(mass+i) + *(mass+j);

@@ -26,7 +26,7 @@ namespace {
         progargs.width(),
         progargs.height(),
         progargs.time_step(),
-        progargs.num_iterations(),
+        particles.id.size(),
     };
   }
 }
