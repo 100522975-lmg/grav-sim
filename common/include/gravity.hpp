@@ -23,7 +23,9 @@ namespace common {
             return {0.0, 0.0};
         }
         double const norm_pi_pj = std::sqrt(dist_sq);
-        double const factor = constants::G * mass_i * mass_j / (dist_sq * norm_pi_pj);
+        double const norm_pi_pj_mult= dist_sq*norm_pi_pj;
+        double const inv_norm_pi_pj=1.0/norm_pi_pj_mult;
+        double const factor = constants::G * mass_i * mass_j * inv_norm_pi_pj;
 
         
         // Apply the formula to obtain the gravity force between two points, but only the constant part, not multiplying
