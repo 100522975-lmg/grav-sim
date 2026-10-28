@@ -1,19 +1,18 @@
 #include "soa.hpp"
 #include <algorithm>
-#include <utility>
 #include <ranges>
 
 // Remove unused particles from the end
 void ParticleSOA::remove_unused() {
-  if (id.empty()) return;
+  if (id.empty()) { return; }
 
-  auto zipped = std::views::zip(id, mass, radius, position, velocity);
-  auto new_end = std::ranges::remove_if(zipped, [](const auto& particle_tuple) {
-    const auto& [current_id, mass, radius, position, velocity] = particle_tuple;
+  const auto zipped = std::views::zip(id, mass, radius, position, velocity);
+  const auto new_end = std::ranges::remove_if(zipped, [](const auto& particle_tuple) {
+  const auto& [current_id, mass, radius, position, velocity] = particle_tuple;
     return current_id == unused_id;
   }).begin();
 
-  const std::size_t new_size = static_cast<std::size_t>(std::distance(zipped.begin(), new_end));
+  const auto new_size = static_cast<std::size_t>(std::distance(zipped.begin(), new_end));
 
   id.resize(new_size);
   mass.resize(new_size);

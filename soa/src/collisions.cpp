@@ -22,28 +22,33 @@ std::vector<CollisionPair> physics::find_collisions(const ParticleSOA & particle
 
 void physics::resolve_collisions(ParticleSOA & particles) {
   const auto collisions = find_collisions(particles);
-  if (collisions.empty()) return; // exit early if no collisions
-  auto * id = particles.id.data();
-  auto * mass = particles.mass.data();
-  auto * radius = particles.radius.data();
-  auto * velocity = particles.velocity.data();
   for (const auto c : collisions) {
     // choose absorber
-    std::size_t i = c.i;
-    std::size_t j = c.j;
-    if (*(id+i) == unused_id || *(id+j) == unused_id) continue;
-    const common::collider a {*(mass+i), *(radius+i), *(id+i)};
-    const common::collider b {*(mass+j), *(radius+j), *(id+j)};
+    const std::size_t i = c.i;
+    auto & id_i = particles.id.at(i);
+    auto & m_i = particles.mass.at(i);
+    auto & v_i = particles.velocity.at(i);
+    const auto & r_i = particles.radius.at(i);
+
+    const std::size_t j = c.j;
+    auto & id_j = particles.id.at(j);
+    auto & m_j = particles.mass.at(j);
+    auto & v_j = particles.velocity.at(j);
+    const auto & r_j = particles.radius.at(j);
+
+    if (id_i == unused_id or id_j == unused_id) { continue; }
+    const common::collider a {m_i, r_i, id_i};
+    const common::collider b {m_j, r_j, id_j};
     if (common::choose_absorber(a,b)) {
-      *(id+j) = unused_id;
-      *(mass+i) = *(mass+i) + *(mass+j);
-      (velocity+i)->x = (velocity+i)->x + (velocity+j)->x;
-      (velocity+i)->y = (velocity+i)->y + (velocity+j)->y;
+      id_j = unused_id;
+      m_i = m_i + m_j;
+      v_i.x = v_i.x + v_j.x;
+      v_i.y = v_i.y + v_j.y;
     } else {
-      *(id+i) = unused_id;
-      *(mass+j) = *(mass+j) + *(mass+i);
-      (velocity+j)->x = (velocity+j)->x + (velocity+i)->x;
-      (velocity+j)->y = (velocity+j)->y + (velocity+i)->y;
+      id_i = unused_id;
+      m_j = m_j + m_i;
+      v_j.x = v_j.x + v_i.x;
+      v_j.y = v_j.y + v_i.y;
     }
   }
 }

@@ -59,7 +59,7 @@ std::vector<std::vector<double>> read_particles(const std::string& input_path, d
     if (parsed.at(0) > 0.0 and parsed.at(1) > 0.0 and check_bound(parsed, width, height)) {
       particles.push_back(parsed);
     } else {
-      particles.push_back({}); // we need bad matches to correctly assign ids
+      particles.emplace_back(); // we need bad matches to correctly assign ids
     }
   }
   return particles;
