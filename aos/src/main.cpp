@@ -13,7 +13,6 @@
 #include "simulation.hpp"
 #include "writer.hpp"
 
-#include <iostream>
 
 namespace vw = std::views;
 
@@ -44,7 +43,7 @@ int main(int argc, char ** argv) try {
   auto const rows=read_particles("input/input.txt",progargs.width(),progargs.height());
   std::vector<particle> particles;
   particles.reserve(rows.size());
-  for(std::size_t id = 0; auto row : rows) {
+  for(std::size_t id = 0; auto const& row : rows) {
     if (row.empty()) { id++; continue; }
     particles.push_back(make_particle(row, id++));
   }
