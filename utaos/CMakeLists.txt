@@ -1,10 +1,9 @@
 set(COMMON_SRC_FILES 
   "${CMAKE_SOURCE_DIR}/aos/src/simulation.cpp"
-  #"${CMAKE_SOURCE_DIR}/aos/src/main.cpp"
 )
 
 set(CURRENT_DIR_SRC_FILES 
-  "${CMAKE_CURRENT_SOURCE_DIR}/test_particle.cpp"
+  #"${CMAKE_CURRENT_SOURCE_DIR}/test_particle.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_simulation.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_collisions.cpp"
 )
