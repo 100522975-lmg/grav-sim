@@ -38,9 +38,13 @@ int main(int argc, char ** argv) try {
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
   common::program_arguments const progargs{vecargs};            
-  
+  // Cache simulation parameters.
+    auto const width = progargs.width();
+    auto const height = progargs.height();
+    auto const time_step = progargs.time_step();
+    auto const iterations = progargs.num_iterations();
   //read valid particles fo input, the id of each one is its position
-  auto const rows=read_particles("input/input.txt",progargs.width(),progargs.height());
+  auto const rows=read_particles("input/input.txt",width,height);
   std::vector<particle> particles;
   particles.reserve(rows.size());
   for(std::size_t id = 0; auto const& row : rows) {
@@ -55,8 +59,8 @@ int main(int argc, char ** argv) try {
   aos::resolve_collisions(particles);
   save("init_config_aos.txt");
   //run simulation
-  for(std::size_t i=0;i<progargs.num_iterations();++i){
-    step(particles,progargs.width(),progargs.height(),progargs.time_step());
+  for(std::size_t i=0;i<iterations;++i){
+    step(particles,width,height,time_step);
     aos::resolve_collisions(particles);
   }
   save("final_config_aos.txt");
