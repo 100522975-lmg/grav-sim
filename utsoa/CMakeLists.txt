@@ -1,12 +1,13 @@
 set(COMMON_SRC_FILES 
   "${CMAKE_SOURCE_DIR}/soa/src/soa.cpp" 
   "${CMAKE_SOURCE_DIR}/soa/src/simulation.cpp" 
+  "${CMAKE_SOURCE_DIR}/soa/src/collisions.cpp"
 )
 
 set(CURRENT_DIR_SRC_FILES 
   "${CMAKE_CURRENT_SOURCE_DIR}/test_particle.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/test_physics.cpp"
-  #"${CMAKE_CURRENT_SOURCE_DIR}/test_collisions.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_collisions.cpp"
 )
 
 add_unit_test_target(
