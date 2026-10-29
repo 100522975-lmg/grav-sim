@@ -2,10 +2,9 @@
 #include "gravity.hpp"
 #include <ranges>
 
-std::vector<common::point> physics::accumulate_force_pairs(const ParticleSOA& particles) {
-  const std::size_t n = particles.id.size();
-  std::vector<common::point> force(n, {0.0, 0.0});
+#include <iostream>
 
+void physics::accumulate_force_pairs(const ParticleSOA& particles, std::vector<common::point> & force) {
   // zip std::vector instances
   const auto particle_tuples = std::views::zip(particles.mass, particles.position, force);
 
@@ -25,13 +24,9 @@ std::vector<common::point> physics::accumulate_force_pairs(const ParticleSOA& pa
     f_i.x += fx_i;
     f_i.y += fy_i;
   }
-  return force;
 }
 
-std::vector<common::point> physics::compute_acceleration(const ParticleSOA & particles, const std::vector<common::point>& force) { 
-  const std::size_t n = particles.id.size();
-  std::vector<common::point> acceleration(n);
-  
+void physics::compute_acceleration(const ParticleSOA & particles, std::span<const common::point> force, std::vector<common::point> & acceleration) { 
   const auto fma_tuple = std::views::zip(force, particles.mass, acceleration);
   
   for (auto [f,m,a] : fma_tuple) {
@@ -39,8 +34,6 @@ std::vector<common::point> physics::compute_acceleration(const ParticleSOA & par
     a.x = f.x * mass_reciprocal;
     a.y = f.y * mass_reciprocal;
   }
-
-  return acceleration;
 }
 
 namespace {
@@ -55,9 +48,12 @@ namespace {
   }
 }
 
-void update::all(ParticleSOA & particles, const std::vector<common::point>& acceleration, double dt) {
+void update::all(ParticleSOA & particles, std::span<const common::point> acceleration, double dt) {
   // Expect vectors of the same size
   if (particles.position.size() != particles.velocity.size() or particles.position.size() != acceleration.size()) {
+    std::cout << particles.position.size() << "\n";
+    std::cout << particles.velocity.size() << "\n";
+    std::cout << acceleration.size() << "\n";
     throw std::invalid_argument("Mismatch in vector sizes.");
   }
   

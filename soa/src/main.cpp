@@ -34,8 +34,11 @@ namespace {
     const auto w = progargs.width();
     const auto h = progargs.height();
     // compute force and acceleration vectors
-    force = physics::accumulate_force_pairs(particles);
-    acceleration = physics::compute_acceleration(particles, force);
+    const auto n = particles.id.size();
+    force.assign(n, common::point{0,0});
+    acceleration.resize(n);
+    physics::accumulate_force_pairs(particles, force);
+    physics::compute_acceleration(particles, force, acceleration);
     // Update velocity and position
     update::all(particles, acceleration, progargs.time_step()); 
     // apply rebound
@@ -63,8 +66,9 @@ int main(int argc, char ** argv) try {
   const std::string init_file = "init_config.txt"; 
   writer::write_config(generate_write_args(progargs, particles), init_file);
   // force + acceleration init
-  std::vector<common::point> force;
-  std::vector<common::point> acceleration; 
+  std::vector<common::point> force, acceleration; 
+  force.reserve(particles.id.size());
+  acceleration.reserve(particles.id.size());
   // main loop calls inlined step function with all functionality
   for (std::size_t i = 0; i < progargs.num_iterations(); ++i) { 
     step(particles, force, acceleration, progargs);

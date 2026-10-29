@@ -41,5 +41,3 @@ ParticleSOA::ParticleSOA(const std::vector<std::vector<double>>& particles) {
     velocity.push_back(common::point{row.at(4), row.at(5)});
   }
 }
-
-

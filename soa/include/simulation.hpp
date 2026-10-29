@@ -2,23 +2,24 @@
 #define SIMULATION_HPP
 
 #include "soa.hpp"
+#include <span>
 
 namespace physics {
     /* Accumulate force pairs
-     * Initialize a vector of points: forces
+     * Take vector of points: forces 
      * Directly accumulate all forces into f_i reference
      * We use Newton's third law to skip the first i+1 elements
-     * Return the vector of accumulated forces
+     * Write to the vector of forces
      */
-    [[nodiscard]] std::vector<common::point> accumulate_force_pairs(const ParticleSOA & particles) ;
+    void accumulate_force_pairs(ParticleSOA const & particles, std::vector<common::point> & force);
     
     /* Compute acceleration
-     * Initialize a vector of points: acceleration
+     * Take a vector of points: acceleration
      * Use the previous function to obtain forces
      * Divide each component of point by each particle's mass
-     * Return the vector of accelerations
+     * Write to the vector of accelerations 
      */
-    [[nodiscard]] std::vector<common::point> compute_acceleration(const ParticleSOA & particles, const std::vector<common::point>& force) ;
+    void compute_acceleration(ParticleSOA const & particles, std::span<const common::point> forces, std::vector<common::point> & acceleration); 
 }
 
 namespace update {
@@ -29,7 +30,7 @@ namespace update {
      * Updates velocity first
      * Updates position second
      */
-    void all(ParticleSOA & particles, const std::vector<common::point>& acceleration, double dt);
+    void all(ParticleSOA & particles, std::span<const common::point> acceleration, double dt);
 }
 
 #endif

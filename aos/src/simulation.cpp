@@ -39,7 +39,9 @@ void step(std::vector<particle> & particles, std::vector<common::point> & forces
     const double dt = progargs.time_step();
     const double w = progargs.width();
     const double h = progargs.height();
-    forces.clear(); accelerations.clear();
+    const auto n = particles.size();
+    forces.assign(n, common::point{0,0});
+    accelerations.resize(n);
     accumulate_forces(particles, forces);
     compute_acceleration(particles, forces, accelerations);
     //move every particle 

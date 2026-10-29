@@ -25,7 +25,7 @@ std::vector<common::CollisionPair> physics::find_collisions(const ParticleSOA & 
 void physics::resolve_collisions(ParticleSOA & particles) {
   const auto collisions = find_collisions(particles);
   for (const auto c : collisions) {
-    // choose absorber
+    // unpack particles i and j 
     const std::size_t i = c.i;
     auto & id_i = particles.id.at(i);
     auto & m_i = particles.mass.at(i);
