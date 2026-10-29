@@ -36,17 +36,30 @@ namespace writer {
       double m{}, r{};
       common::point p, v;
     };
-
+    
+    /* Format header
+     * Called once per config file.
+     * Formats double to 3 decimal places and prints to a buffer
+     */
     inline void format_header(const header_args& args, std::ofstream& buffer) {
       std::println(buffer, "{:.3f} {:.3f} {:.3f} {}", args.w, args.h, args.dt, args.n);
     }
-
+  
+    /* Format particle line
+     * Function gets called once per valid particle
+     * Formats doubles to 3 decimal places and reuses the same buffer
+     */
     inline void format_particle_line(const line_args& args, std::ofstream& buffer) {
       std::println(buffer, "{}: {:.3f} {:.3f} {:.3f} {:.3f} {:.3f} {:.3f}",
                    args.id, args.m, args.r, args.p.x, args.p.y, args.v.x, args.v.y);
     }
   }  // namespace detail
 
+  /* Write config
+   * Merge AOS and SOA implementations using templates
+   * M, P, I are random access views
+   * We zip all values we want to print and iterate normally
+   */
   template <class M, class P, class I>
   void write_config(const write_args<M, P, I>& args, const std::string& path) {
     std::ofstream out{path};

@@ -6,35 +6,26 @@
 #include "common.hpp"
 
 namespace common {
-
+    /* Pair force
+     * Small function to compute the force between two particles
+     * Using Newton's formula:
+     * F_{ij} = G * \frac{m_{i} * m_{j}}{||p_{j} - p_{i}||^2} * \frac{p_{j} - p_{i}}{||p_{j} - p_{i}||}
+     * Avoids using std::pow in a hot loop
+     * Program avoids computing F_{i,i} so we save a branch checking
+     * division by 0 
+     */
     [[nodiscard]] inline point pair_force(double mass_i, double mass_j, point const & p_i, point const & p_j){ 
-        // Function for the gravity formula: 
-        // F_{ij} = G * \frac{m_{i} * m_{j}}{||p_{j} - p_{i}||^2} * \frac{p_{j} - p_{i}}{||p_{j} - p_{i}||}
-         
-        // Start by computing the difference of positions (p_{j} - p_{i}): 
         double const pj_pi_x = p_j.x - p_i.x; 
         double const pj_pi_y = p_j.y - p_i.y; 
 
-        // Continue with the norm (distance) ||p_{j} - p_{i}||: 
         double const dist_sq = pj_pi_x * pj_pi_x + pj_pi_y * pj_pi_y;
-        // In case the distance is 0 because we are calculating the gravity force between a point and itself, 
-        // We already know that this force will be 0. So, to avoid dividing by 0, we do the following: 
-        if (dist_sq == 0.0) {
-            return {0.0, 0.0};
-        }
+
         double const norm_pi_pj = std::sqrt(dist_sq);
         double const norm_pi_pj_mult= dist_sq*norm_pi_pj;
         double const inv_norm_pi_pj=1.0/norm_pi_pj_mult;
         double const factor = constants::G * mass_i * mass_j * inv_norm_pi_pj;
 
-        
-        // Apply the formula to obtain the gravity force between two points, but only the constant part, not multiplying
-        // by (p_{j} - p_{i}) just yet. Therefore, the variable will not be called f_ij, but factor.  
-
-        // Now, since multiplying a vector (in this case a point with two coordinates) by a scalar means to 
-        // multiply each entry of the vector by said scalar, the final result is: 
         return {factor * pj_pi_x, factor * pj_pi_y}; 
-        
     }
 }
 

@@ -6,6 +6,10 @@
 #include "common.hpp"
 
 namespace common {
+    /* Rebound effect
+     * Treat each case independently
+     * Likely inlined by -O3 flag
+     */
     inline void rebound_effect(point& p, point& velocity, double r, point dimensions){
 
         // There are several cases depending on the border that the ball is about to collide with. 
