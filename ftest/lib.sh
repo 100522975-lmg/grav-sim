@@ -1,10 +1,10 @@
-# ftest/lib.sh 
+# ftest/lib.sh - shared helpers for the functional tests (no pipes are used anywhere)
 
 TOL=0.0011        # absolute tolerance (values are printed with 3 decimals)
 RTOL=1e-9         # relative tolerance, for very large masses
 TIMEOUT=120
 
-PROG=""            # program under test: aos | soa
+PROG=""            # program under test: aos or soa
 EXE=""             # absolute path of its executable
 CASE_DIR=""        # current scratch directory (cwd of the program)
 RC=0               # exit code of the last run
@@ -18,7 +18,7 @@ new_case() {
   mkdir -p "$CASE_DIR/input"
 }
 
-write_input() { cat > "$CASE_DIR/input/input.txt"; }   # content from stdin
+write_input() { cat > "$CASE_DIR/input/input.txt"; }   # content comes from stdin
 
 # run_prog <num_iterations> <width> <height> <time_step>   (any args, really)
 run_prog() {
@@ -26,18 +26,27 @@ run_prog() {
   RC=$?
 }
 
+# short one-line summary of stderr, used inside failure messages
 stderr_hint() {
+  local s
   if [[ -s "$CASE_DIR/stderr.txt" ]]; then
-    printf ' (stderr: %s)' "$(head -c 160 "$CASE_DIR/stderr.txt" | tr '\n\t' '  ')"
+    s="$(head -c 160 "$CASE_DIR/stderr.txt")"
+    s="${s//$'\n'/ }"
+    s="${s//$'\t'/ }"
+    printf ' (stderr: %s)' "$s"
   fi
 }
 
 assert_rc() {  # expected exit code
-  [[ "$RC" -eq "$1" ]] || fail "exit code is $RC, expected $1$(stderr_hint)"
+  if [[ "$RC" -ne "$1" ]]; then
+    fail "exit code is $RC, expected $1$(stderr_hint)"
+  fi
 }
 
 assert_file() {  # file must exist; returns 1 otherwise so callers can skip
-  [[ -f "$CASE_DIR/$1" ]] && return 0
+  if [[ -f "$CASE_DIR/$1" ]]; then
+    return 0
+  fi
   fail "$1 was not created"
   return 1
 }
@@ -45,20 +54,41 @@ assert_file() {  # file must exist; returns 1 otherwise so callers can skip
 # number of particle lines (everything after the header)
 body_lines() { awk 'END { print (NR > 0 ? NR - 1 : 0) }' "$CASE_DIR/$1"; }
 
+# first line of a file (inside CASE_DIR)
+first_line() {
+  local l=""
+  IFS= read -r l < "$CASE_DIR/$1"
+  printf '%s' "$l"
+}
+
+# 4th field of the header line: the number of objects
+header_count() {
+  local a="" b="" c="" n="" rest=""
+  read -r a b c n rest < "$CASE_DIR/$1"
+  printf '%s' "$n"
+}
+
 assert_header() {  # file "w h dt n" (exact text)
-  local got; got="$(head -n1 "$CASE_DIR/$1")"
-  [[ "$got" == "$2" ]] || fail "$1: header is '$got', expected '$2'"
+  local got
+  got="$(first_line "$1")"
+  if [[ "$got" != "$2" ]]; then
+    fail "$1: header is '$got', expected '$2'"
+  fi
 }
 
 assert_count() {  # file n : header count field AND number of lines agree with n
   local f=$1 n=$2 hn nl
-  hn="$(head -n1 "$CASE_DIR/$f" | awk '{ print $4 }')"
+  hn="$(header_count "$f")"
   nl="$(body_lines "$f")"
-  [[ "$hn" == "$n" ]] || fail "$f: header says '$hn' objects, expected $n"
-  [[ "$nl" == "$n" ]] || fail "$f: has $nl particle lines, expected $n"
+  if [[ "$hn" != "$n" ]]; then
+    fail "$f: header says '$hn' objects, expected $n"
+  fi
+  if [[ "$nl" != "$n" ]]; then
+    fail "$f: has $nl particle lines, expected $n"
+  fi
 }
 
-# close A B : |A-B| <= TOL + RTOL*max(|A|,|B|)
+# close A B : the absolute difference of A and B is at most TOL + RTOL * the larger magnitude
 close() {
   awk -v a="$1" -v b="$2" -v t="$TOL" -v r="$RTOL" 'BEGIN {
     d = a - b; if (d < 0) d = -d
@@ -68,32 +98,59 @@ close() {
 
 # assert_particle <file> <index0> m r x y vx vy
 assert_particle() {
-  local f=$1 idx=$2 line tok i
+  local f=$1 idx=$2 line i
+  local tok=()
   shift 2
   local exp=("$@")
   local names=(mass radius x y vx vy)
-  line="$(sed -n "$((idx + 2))p" "$CASE_DIR/$f" | sed -E 's/^[0-9]+:[[:space:]]*//')"
-  if [[ -z "$line" ]]; then fail "$f: particle #$idx is missing"; return; fi
+  # the line of particle idx, without the optional "id: " prefix
+  line="$(awk -v n="$((idx + 2))" 'NR == n { sub(/^[0-9]+:[ ]*/, ""); print; exit }' "$CASE_DIR/$f")"
+  if [[ -z "$line" ]]; then
+    fail "$f: particle #$idx is missing"
+    return
+  fi
   read -r -a tok <<< "$line"
-  if [[ ${#tok[@]} -ne 6 ]]; then fail "$f: particle #$idx has ${#tok[@]} fields, expected 6 ('$line')"; return; fi
+  if [[ ${#tok[@]} -ne 6 ]]; then
+    fail "$f: particle #$idx has ${#tok[@]} fields, expected 6 ('$line')"
+    return
+  fi
   for i in 0 1 2 3 4 5; do
-    close "${tok[$i]}" "${exp[$i]}" || fail "$f: particle #$idx ${names[$i]} = ${tok[$i]}, expected ${exp[$i]}"
+    if ! close "${tok[$i]}" "${exp[$i]}"; then
+      fail "$f: particle #$idx ${names[$i]} = ${tok[$i]}, expected ${exp[$i]}"
+    fi
   done
 }
 
 # assert_format <file> : strict check of the output format from the statement
+#   header: width height time_step count (3 decimals, count is an integer)
+#   lines : [id: ] mass radius x y vx vy (3 decimals)
 assert_format() {
-  local f=$1 bad
-  if ! head -n1 "$CASE_DIR/$f" |
-       grep -Eq '^[0-9]+\.[0-9]{3} [0-9]+\.[0-9]{3} [0-9]+\.[0-9]{3} [0-9]+$'; then
-    fail "$f: bad header '$(head -n1 "$CASE_DIR/$f")' (want: width height time_step count, 3 decimals)"
+  local f=$1 line first
+  local header_re='^[0-9]+\.[0-9]{3} [0-9]+\.[0-9]{3} [0-9]+\.[0-9]{3} [0-9]+$'
+  local line_re='^([0-9]+: )?-?[0-9]+\.[0-9]{3}( -?[0-9]+\.[0-9]{3}){5}$'
+  local n=0 bad="" hn nl
+  first="$(first_line "$f")"
+  if [[ ! "$first" =~ $header_re ]]; then
+    fail "$f: bad header '$first' (want: width height time_step count, 3 decimals)"
   fi
-  bad="$(tail -n +2 "$CASE_DIR/$f" |
-         grep -nEv '^-?[0-9]+\.[0-9]{3}( -?[0-9]+\.[0-9]{3}){5}$' | head -n1)"
-  [[ -z "$bad" ]] || fail "$f: particle line not 'mass radius x y vx vy' with 3 decimals: ${bad#*:}"
-  local hn nl
-  hn="$(head -n1 "$CASE_DIR/$f" | awk '{ print $4 }')"; nl="$(body_lines "$f")"
-  [[ "$hn" == "$nl" ]] || fail "$f: header count $hn but $nl particle lines"
+  while IFS= read -r line; do
+    n=$((n + 1))
+    if [[ $n -eq 1 ]]; then
+      continue
+    fi
+    if [[ ! "$line" =~ $line_re ]]; then
+      bad="$line"
+      break
+    fi
+  done < "$CASE_DIR/$f"
+  if [[ -n "$bad" ]]; then
+    fail "$f: particle line not 'mass radius x y vx vy' with 3 decimals: $bad"
+  fi
+  hn="$(header_count "$f")"
+  nl="$(body_lines "$f")"
+  if [[ "$hn" != "$nl" ]]; then
+    fail "$f: header count $hn but $nl particle lines"
+  fi
 }
 
 # configs_close <fileA> <fileB> : numeric comparison of two config files

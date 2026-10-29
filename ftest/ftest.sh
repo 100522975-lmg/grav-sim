@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
+# ftest.sh - functional tests for grav-aos and grav-soa (no pipes are used anywhere)
+#
+# Usage: bash ftest/ftest.sh [options]
+#   -b DIR   build directory (default: out/build/default, then out/build/clang-tidy)
+#   -c CFG   build configuration (default: Release)
+#   -p PROG  test only one program: aos or soa (default: both, plus the cross test)
+#   -f REGEX run only the tests whose name matches REGEX (e.g. -f collision)
+#   -k       keep the temporary work directory
+#   -l       list the tests and exit
+#   -h       show this help
+# Environment: GRAV_AOS / GRAV_SOA = explicit path to an executable.
 set -u
-set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FT_DIR="$SCRIPT_DIR"
@@ -12,7 +22,19 @@ FILTER=""
 KEEP=0
 LIST=0
 
-usage() { sed -n '2,/^# ------.*$/p' "$0" | sed -n '2,26p' | sed 's/^# \{0,1\}//'; }
+usage() {
+  cat <<'EOF'
+Usage: bash ftest/ftest.sh [options]
+  -b DIR   build directory (default: out/build/default, then out/build/clang-tidy)
+  -c CFG   build configuration (default: Release)
+  -p PROG  test only one program: aos or soa (default: both, plus the cross test)
+  -f REGEX run only the tests whose name matches REGEX (e.g. -f collision)
+  -k       keep the temporary work directory
+  -l       list the tests and exit
+  -h       show this help
+Environment: GRAV_AOS / GRAV_SOA = explicit path to an executable.
+EOF
+}
 
 while getopts "b:c:p:f:klh" opt; do
   case "$opt" in
@@ -27,7 +49,10 @@ while getopts "b:c:p:f:klh" opt; do
   esac
 done
 for p in "${PROGS[@]}"; do
-  [[ "$p" == aos || "$p" == soa ]] || { echo "ftest: unknown program '$p' (use aos or soa)" >&2; exit 2; }
+  if [[ "$p" != aos && "$p" != soa ]]; then
+    echo "ftest: unknown program '$p' (use aos or soa)" >&2
+    exit 2
+  fi
 done
 
 if [[ -t 1 ]]; then
@@ -50,8 +75,9 @@ for f in "$FT_DIR"/test_*.sh; do
   source "$f"
 done
 
-mapfile -t PER_PROG_TESTS < <(compgen -A function | grep '^t_' | sort)
-mapfile -t CROSS_TESTS    < <(compgen -A function | grep '^x_' | sort)
+# per-program tests are the functions named t_*, cross tests are named x_*
+mapfile -t PER_PROG_TESTS < <(compgen -A function t_)
+mapfile -t CROSS_TESTS < <(compgen -A function x_)
 
 if [[ $LIST -eq 1 ]]; then
   printf '%s\n' "${PER_PROG_TESTS[@]}" "${CROSS_TESTS[@]}"
@@ -61,18 +87,25 @@ fi
 
 # Locating executables
 
-find_exe() {  # $1 = aos | soa  -> prints absolute path (or nothing)
+find_exe() {  # $1 = aos or soa  -> prints absolute path (or nothing)
   local name="$1" var="GRAV_${1^^}" d cand
   if [[ -n "${!var:-}" ]]; then
-    [[ -x "${!var}" ]] && realpath "${!var}"
+    if [[ -x "${!var}" ]]; then
+      realpath "${!var}"
+    fi
     return 0
   fi
   local dirs=()
-  [[ -n "$BUILD_DIR" ]] && dirs+=("$BUILD_DIR")
-  dirs+=("$SCRIPT_DIR/out/build/default" "$SCRIPT_DIR/out/build/clang-tidy")
+  if [[ -n "$BUILD_DIR" ]]; then
+    dirs+=("$BUILD_DIR")
+  fi
+  dirs+=("$ROOT_DIR/out/build/default" "$ROOT_DIR/out/build/clang-tidy")
   for d in "${dirs[@]}"; do
     cand="$d/$name/$CONFIG/grav-$name"
-    if [[ -x "$cand" ]]; then realpath "$cand"; return 0; fi
+    if [[ -x "$cand" ]]; then
+      realpath "$cand"
+      return 0
+    fi
   done
   return 0
 }
@@ -88,7 +121,9 @@ for p in "${PROGS[@]}"; do
   fi
 done
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/ftest.XXXXXX")"
-if [[ $KEEP -eq 0 ]]; then trap 'rm -rf "$WORK"' EXIT; fi
+if [[ $KEEP -eq 0 ]]; then
+  trap 'rm -rf "$WORK"' EXIT
+fi
 
 
 # Runner
@@ -96,8 +131,10 @@ if [[ $KEEP -eq 0 ]]; then trap 'rm -rf "$WORK"' EXIT; fi
 PASSED=0; FAILED=0; FAILED_NAMES=()
 
 run_one() {  # <display name> <function>
-  local name=$1 fn=$2
-  if [[ -n "$FILTER" && ! "$name" =~ $FILTER ]]; then return; fi
+  local name=$1 fn=$2 m
+  if [[ -n "$FILTER" && ! "$name" =~ $FILTER ]]; then
+    return
+  fi
   T_FAILS=0; T_MSGS=()
   "$fn"
   if (( T_FAILS == 0 )); then
@@ -106,26 +143,33 @@ run_one() {  # <display name> <function>
   else
     FAILED=$((FAILED + 1)); FAILED_NAMES+=("$name")
     printf '%sFAIL%s  %s\n' "$RED" "$OFF" "$name"
-    local m
-    for m in "${T_MSGS[@]}"; do printf '        - %s\n' "$m"; done
+    for m in "${T_MSGS[@]}"; do
+      printf '        - %s\n' "$m"
+    done
   fi
 }
 
 for PROG in "${PROGS[@]}"; do
   EXE="${EXE_OF[$PROG]}"
   echo "=== grav-$PROG  ($EXE)"
-  for t in "${PER_PROG_TESTS[@]}"; do run_one "$PROG/${t#t_}" "$t"; done
+  for t in "${PER_PROG_TESTS[@]}"; do
+    run_one "$PROG/${t#t_}" "$t"
+  done
 done
 if [[ ${#PROGS[@]} -eq 2 ]]; then
   echo "=== aos vs soa"
-  for t in "${CROSS_TESTS[@]}"; do run_one "cross/${t#x_}" "$t"; done
+  for t in "${CROSS_TESTS[@]}"; do
+    run_one "cross/${t#x_}" "$t"
+  done
 fi
 
 echo
 printf 'Result: %s%d passed%s, %s%d failed%s\n' "$GREEN" "$PASSED" "$OFF" "$RED" "$FAILED" "$OFF"
 if (( FAILED > 0 )); then
   printf '%sFailed:%s %s\n' "$YEL" "$OFF" "${FAILED_NAMES[*]}"
-  [[ $KEEP -eq 1 ]] && echo "Work directory kept: $WORK"
+  if [[ $KEEP -eq 1 ]]; then
+    echo "Work directory kept: $WORK"
+  fi
   exit 1
 fi
 exit 0

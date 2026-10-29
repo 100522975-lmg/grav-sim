@@ -2,22 +2,29 @@
 
 # arg_error <label> <stderr-regex> <args...>
 arg_error() {
-  local label=$1 re=$2 f
+  local label=$1 re=$2 f first=""
   shift 2
   new_case
   write_input <<< "10.0 1.0 50.0 50.0 0.0 0.0"
   run_prog "$@"
-  [[ "$RC" -eq 1 ]] || fail "$label: exit code is $RC, expected 1 (EXIT_FAILURE)"
+  if [[ "$RC" -ne 1 ]]; then
+    fail "$label: exit code is $RC, expected 1 (EXIT_FAILURE)"
+  fi
   if [[ ! -s "$CASE_DIR/stderr.txt" ]]; then
     fail "$label: nothing written to standard error"
   else
-    head -n1 "$CASE_DIR/stderr.txt" | grep -q "^grav-$PROG:" ||
-      fail "$label: first stderr line should start with 'grav-$PROG:' (got '$(head -n1 "$CASE_DIR/stderr.txt")')"
-    grep -Eq "$re" "$CASE_DIR/stderr.txt" ||
-      fail "$label: stderr does not match /$re/ (got: $(head -c 160 "$CASE_DIR/stderr.txt" | tr '\n\t' '  '))"
+    IFS= read -r first < "$CASE_DIR/stderr.txt"
+    if [[ "$first" != "grav-$PROG:"* ]]; then
+      fail "$label: first stderr line should start with 'grav-$PROG:' (got '$first')"
+    fi
+    if ! grep -Eq "$re" "$CASE_DIR/stderr.txt"; then
+      fail "$label: stderr does not match /$re/$(stderr_hint)"
+    fi
   fi
   for f in init_config.txt final_config.txt; do
-    [[ ! -e "$CASE_DIR/$f" ]] || fail "$label: $f was written even though the arguments are invalid"
+    if [[ -e "$CASE_DIR/$f" ]]; then
+      fail "$label: $f was written even though the arguments are invalid"
+    fi
   done
 }
 

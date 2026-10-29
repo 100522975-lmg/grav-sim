@@ -6,14 +6,19 @@ collide2() {
   new_case
   printf '%s\n%s\n' "$l0" "$l1" > "$CASE_DIR/input/input.txt"
   run_prog 1 100 100 1.0
-  [[ "$RC" -eq 0 ]] || { fail "$label: exit code $RC$(stderr_hint)"; return; }
+  if [[ "$RC" -ne 0 ]]; then
+    fail "$label: exit code $RC$(stderr_hint)"
+    return
+  fi
   # shellcheck disable=SC2086
   if assert_file init_config.txt; then
-    assert_count init_config.txt 1; assert_particle init_config.txt 0 $ei
+    assert_count init_config.txt 1
+    assert_particle init_config.txt 0 $ei
   fi
   # shellcheck disable=SC2086
   if assert_file final_config.txt; then
-    assert_count final_config.txt 1; assert_particle final_config.txt 0 $ef
+    assert_count final_config.txt 1
+    assert_particle final_config.txt 0 $ef
   fi
 }
 
@@ -33,17 +38,22 @@ t_collision_equal_mass_radius_lower_id() {
 
 t_collision_distance_threshold() {
   # collide only if distance < r_i + r_j (here the sum of radii is 3)
-  local label d n
+  local label d n hn
   for d in 3.0:2 2.9:1 3.1:2; do
     n="${d#*:}"; d="${d%:*}"; label="distance $d"
     new_case
     printf '5.0 1.0 50.0 50.0 0.0 0.0\n5.0 2.0 %s 50.0 0.0 0.0\n' "$(awk -v d="$d" 'BEGIN { printf "%.1f", 50 + d }')" \
       > "$CASE_DIR/input/input.txt"
     run_prog 1 100 100 1.0
-    [[ "$RC" -eq 0 ]] || { fail "$label: exit code $RC$(stderr_hint)"; continue; }
+    if [[ "$RC" -ne 0 ]]; then
+      fail "$label: exit code $RC$(stderr_hint)"
+      continue
+    fi
     if assert_file init_config.txt; then
-      local hn; hn="$(head -n1 "$CASE_DIR/init_config.txt" | awk '{ print $4 }')"
-      [[ "$hn" == "$n" ]] || fail "$label: init_config has $hn objects, expected $n"
+      hn="$(header_count init_config.txt)"
+      if [[ "$hn" != "$n" ]]; then
+        fail "$label: init_config has $hn objects, expected $n"
+      fi
     fi
   done
 }
@@ -100,7 +110,9 @@ EOF
 EOF
   run_prog 12 100 100 1.0
   assert_rc 0
-  if assert_file init_config.txt; then assert_count init_config.txt 2; fi
+  if assert_file init_config.txt; then
+    assert_count init_config.txt 2
+  fi
   if assert_file final_config.txt; then
     # merged at step 10 (v = 0) and then stays at the absorber's position
     assert_count final_config.txt 1

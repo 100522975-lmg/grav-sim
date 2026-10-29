@@ -14,7 +14,7 @@ t_input_discards_out_of_range() {
 EOF
   run_prog 1 100 100 1.0
   assert_rc 0
-  assert_file init_config.txt || return
+  if ! assert_file init_config.txt; then return; fi
   assert_count init_config.txt 2
   assert_particle init_config.txt 0 10 1 50 50 0 0
   assert_particle init_config.txt 1 20 2 80 80 0 0
@@ -30,7 +30,7 @@ t_input_discards_negative_values() {
 EOF
   run_prog 1 100 100 1.0
   assert_rc 0
-  assert_file init_config.txt || return
+  if ! assert_file init_config.txt; then return; fi
   assert_count init_config.txt 1
   assert_particle init_config.txt 0 10 1 50 50 0 0
 }
@@ -48,7 +48,7 @@ this is not a particle
 EOF
   run_prog 1 100 100 1.0
   assert_rc 0
-  assert_file init_config.txt || return
+  if ! assert_file init_config.txt; then return; fi
   assert_count init_config.txt 2
   assert_particle init_config.txt 0 10 1 50 50 0 0
   assert_particle init_config.txt 1 20 2 80 80 0 0
@@ -59,17 +59,17 @@ t_input_incomplete_last_line() {
   printf '10.0 1.0 50.0 50.0 0.0 0.0\n20.0 2.0 80.0 80.0 0.0 0.0\n30.0 1.0 20.0 20.0 1.0' > "$CASE_DIR/input/input.txt"
   run_prog 1 100 100 1.0
   assert_rc 0
-  assert_file init_config.txt || return
+  if ! assert_file init_config.txt; then return; fi
   assert_count init_config.txt 2
 }
 
 t_input_last_line_without_newline() {
-  # a complete last line is valid even if the file does not end with '\n'
+  # a complete last line is valid even if the file does not end with a newline
   new_case
   printf '10.0 1.0 50.0 50.0 0.0 0.0\n20.0 2.0 80.0 80.0 0.0 0.0' > "$CASE_DIR/input/input.txt"
   run_prog 1 100 100 1.0
   assert_rc 0
-  assert_file init_config.txt || return
+  if ! assert_file init_config.txt; then return; fi
   assert_count init_config.txt 2
   assert_particle init_config.txt 1 20 2 80 80 0 0
 }
@@ -86,7 +86,7 @@ EOF
   assert_rc 0
   local f
   for f in init_config.txt final_config.txt; do
-    assert_file "$f" || continue
+    if ! assert_file "$f"; then continue; fi
     assert_header "$f" "100.000 100.000 1.000 0"
     assert_count "$f" 0
   done
