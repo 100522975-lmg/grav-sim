@@ -127,120 +127,187 @@ TEST(test_step, isolated_particle_moves_in_a_straight_line) {
 }
 
 TEST(test_step, isolated_particle_has_zero_acceleration) {
-  std::vector<particle> ps{make(0, 2.0, {5.0, 5.0}, {})};
-  buffers b;
-
-  step(ps, b.forces, b.accelerations, make_args(100.0, 100.0, 0.5));
-
-  // Current step() clears the buffers and does not resize them.
-  EXPECT_TRUE(b.forces.empty());
-  EXPECT_TRUE(b.accelerations.empty());
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.y, 0.0);
-}
-
-// step: gravity
-
-TEST(test_step, gravity_matches_the_hand_computed_value) {
   std::vector<particle> ps{
-      make(0, 1.0e16, {100.0, 500.0}, {0.0, 0.0}),
-      make(1, 1.0e16, {200.0, 500.0}, {0.0, 0.0}),
+      make(0, 5.0, {100.0, 100.0}, {})
   };
   buffers b;
-  constexpr double dt = 1.0e-6;
 
-  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, dt));
+  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 0.01));
 
-  // With empty buffers, the current implementation performs no force update.
-  EXPECT_TRUE(b.forces.empty());
-  EXPECT_TRUE(b.accelerations.empty());
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.y, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).velocity.y, 0.0);
+  ASSERT_EQ(b.forces.size(), 1U);
+  ASSERT_EQ(b.accelerations.size(), 1U);
+
+  EXPECT_DOUBLE_EQ(b.forces.at(0).x, 0.0);
+  EXPECT_DOUBLE_EQ(b.forces.at(0).y, 0.0);
+  EXPECT_DOUBLE_EQ(b.accelerations.at(0).x, 0.0);
+  EXPECT_DOUBLE_EQ(b.accelerations.at(0).y, 0.0);
+}
+namespace{
+  void expect_gravity_results(
+      std::vector<particle> const& ps,
+      buffers const& b,
+      double dt) {
+    for (std::size_t i = 0; i < ps.size(); ++i) {
+      EXPECT_DOUBLE_EQ(
+          b.accelerations.at(i).x,
+          b.forces.at(i).x / ps.at(i).mass);
+
+      EXPECT_DOUBLE_EQ(
+          ps.at(i).velocity.x,
+          b.accelerations.at(i).x * dt);
+
+      EXPECT_DOUBLE_EQ(b.forces.at(i).y, 0.0);
+      EXPECT_DOUBLE_EQ(b.accelerations.at(i).y, 0.0);
+      EXPECT_DOUBLE_EQ(ps.at(i).velocity.y, 0.0);
+    }
+  }
+}
+TEST(test_step, gravity_matches_the_hand_computed_value) {
+ constexpr double mass = 1.0e16;
+  constexpr double dt = 1.0e-3;
+  constexpr double expected_force = 6.67430e17;
+
+  std::vector<particle> ps{
+      make(0, mass, {100.0, 500.0}, {}),
+      make(1, mass, {200.0, 500.0}, {}),
+  };
+
+  buffers b;
+  step(ps, b.forces, b.accelerations,
+       make_args(1000.0, 1000.0, dt));
+
+  ASSERT_EQ(b.forces.size(), ps.size());
+  ASSERT_EQ(b.accelerations.size(), ps.size());
+
+  EXPECT_NEAR(b.forces.at(0).x, expected_force, 1e5);
+  EXPECT_NEAR(b.forces.at(1).x, -expected_force, 1e5);
+
+  EXPECT_DOUBLE_EQ(b.forces.at(0).y, 0.0);
+  EXPECT_DOUBLE_EQ(b.forces.at(1).y, 0.0);
+
+  EXPECT_NEAR(b.accelerations.at(0).x, expected_force / mass, 1e-12);
+  EXPECT_NEAR(b.accelerations.at(1).x, -expected_force / mass, 1e-12);
 }
 
 TEST(test_step, particles_attract_each_other) {
+  constexpr double mass = 1.0e16;
+  constexpr double dt = 1.0e-3;
+
   std::vector<particle> ps{
-      make(0, 1.0e16, {100.0, 100.0}, {}),
-      make(1, 1.0e16, {200.0, 100.0}, {}),
+      make(0, mass, {100.0, 100.0}, {}),
+      make(1, mass, {200.0, 100.0}, {}),
+  };
+
+  buffers b;
+  step(ps, b.forces, b.accelerations,
+       make_args(1000.0, 1000.0, dt));
+
+  ASSERT_EQ(b.forces.size(), ps.size());
+  ASSERT_EQ(b.accelerations.size(), ps.size());
+
+  EXPECT_GT(b.forces.at(0).x, 0.0);
+  EXPECT_LT(b.forces.at(1).x, 0.0);
+
+  EXPECT_GT(b.accelerations.at(0).x, 0.0);
+  EXPECT_LT(b.accelerations.at(1).x, 0.0);
+
+  EXPECT_DOUBLE_EQ(b.forces.at(0).y, 0.0);
+  EXPECT_DOUBLE_EQ(b.forces.at(1).y, 0.0);
+  EXPECT_DOUBLE_EQ(b.accelerations.at(0).y, 0.0);
+  EXPECT_DOUBLE_EQ(b.accelerations.at(1).y, 0.0);
+}
+
+TEST(test_step, acceleration_is_force_divided_by_own_mass) {
+  std::vector<particle> ps{
+    make(0, 2.0, {100.0, 100.0}, {}),
+    make(1, 5.0, {103.0, 104.0}, {}),
   };
   buffers b;
 
   step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 1.0e-3));
 
-  // Current implementation leaves acceleration at zero, so there is no attraction.
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(0).position.x, 100.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).position.x, 200.0);
-  EXPECT_TRUE(b.forces.empty());
-}
+  ASSERT_EQ(b.forces.size(), ps.size());
+  ASSERT_EQ(b.accelerations.size(), ps.size());
 
-TEST(test_step, acceleration_is_force_divided_by_own_mass) {
-  std::vector<particle> ps{
-      make(0, 2.0, {0.0, 0.0}, {}),
-      make(1, 5.0, {3.0, 4.0}, {}),
-  };
-  buffers b;
-
-  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 0.001));
-
-  // Current step() leaves the caller-provided acceleration buffer empty.
-  EXPECT_TRUE(b.accelerations.empty());
-  EXPECT_TRUE(b.forces.empty());
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.y, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).velocity.y, 0.0);
+  std::size_t i = 0;
+  for (auto const& p : ps) {
+    EXPECT_NEAR(
+    b.accelerations.at(i).x,
+    b.forces.at(i).x / p.mass,
+    tolerance);
+    EXPECT_NEAR(
+    b.accelerations.at(i).y,
+    b.forces.at(i).y / p.mass,
+    tolerance);
+    ++i;
+  }
 }
 
 TEST(test_step, forces_are_equal_and_opposite) {
   std::vector<particle> ps{
-      make(0, 2.0, {0.0, 0.0}, {}),
-      make(1, 5.0, {3.0, 4.0}, {}),
+      make(0, 2.0, {100.0, 100.0}, {}),
+      make(1, 5.0, {200.0, 150.0}, {}),
   };
   buffers b;
 
-  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 0.001));
+  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 1.0e-3));
 
-  // Current step() clears forces and does not repopulate the buffer.
-  EXPECT_TRUE(b.forces.empty());
-  EXPECT_TRUE(b.accelerations.empty());
+  ASSERT_EQ(b.forces.size(), 2U);
+
+  EXPECT_NEAR(
+      b.forces.at(0).x + b.forces.at(1).x, 0.0, tolerance);
+  EXPECT_NEAR(
+      b.forces.at(0).y + b.forces.at(1).y, 0.0, tolerance);
 }
 
 TEST(test_step, three_particles_add_both_forces_on_the_middle_one) {
+  constexpr double dt = 1.0e-3;
+
   std::vector<particle> ps{
       make(0, 1.0, {10.0, 50.0}, {}),
       make(1, 1.0, {11.0, 50.0}, {}),
       make(2, 3.0, {13.0, 50.0}, {}),
   };
+
   buffers b;
+  step(ps, b.forces, b.accelerations,
+       make_args(1000.0, 1000.0, dt));
 
-  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 0.001));
+  ASSERT_EQ(b.forces.size(), ps.size());
+  ASSERT_EQ(b.accelerations.size(), ps.size());
 
-  // The cleared force buffer remains empty in the current implementation.
-  EXPECT_TRUE(b.forces.empty());
-  EXPECT_TRUE(b.accelerations.empty());
-  for (const auto& p : ps) {
-    EXPECT_DOUBLE_EQ(p.velocity.x, 0.0);
-    EXPECT_DOUBLE_EQ(p.velocity.y, 0.0);
-  }
+  // The left particle's attraction is stronger, so the net force is leftward.
+  EXPECT_LT(b.forces.at(1).x, 0.0);
+  EXPECT_DOUBLE_EQ(b.forces.at(1).y, 0.0);
+
+  EXPECT_LT(b.accelerations.at(1).x, 0.0);
+  EXPECT_DOUBLE_EQ(b.accelerations.at(1).y, 0.0);
+
+  EXPECT_NEAR(b.accelerations.at(1).x,
+              b.forces.at(1).x / ps.at(1).mass, 1e-15);
 }
+
 
 TEST(test_step, total_force_of_the_system_is_zero) {
   std::vector<particle> ps{
-      make(0, 2.0, {20.0, 20.0}, {}),
-      make(1, 3.0, {24.0, 21.0}, {}),
-      make(2, 5.0, {18.0, 27.0}, {}),
+      make(0, 1.0, {10.0, 10.0}, {}),
+      make(1, 2.0, {20.0, 15.0}, {}),
+      make(2, 3.0, {30.0, 25.0}, {}),
   };
   buffers b;
 
-  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 0.001));
+  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 1.0e-3));
 
-  // No force entries are produced by the current step() implementation.
-  EXPECT_TRUE(b.forces.empty());
-  EXPECT_TRUE(b.accelerations.empty());
+  ASSERT_EQ(b.forces.size(), ps.size());
+
+  point total{};
+  for (auto const& force : b.forces) {
+    total.x += force.x;
+    total.y += force.y;
+  }
+
+  EXPECT_NEAR(total.x, 0.0, tolerance);
+  EXPECT_NEAR(total.y, 0.0, tolerance);
 }
 
 TEST(test_step, middle_particle_between_equal_masses_is_balanced) {
@@ -251,17 +318,56 @@ TEST(test_step, middle_particle_between_equal_masses_is_balanced) {
   };
   buffers b;
 
-  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 0.001));
+  step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, 1.0e-3));
 
-  // With no computed acceleration, every particle keeps its initial velocity.
-  EXPECT_TRUE(b.accelerations.empty());
-  for (const auto& p : ps) {
-    EXPECT_DOUBLE_EQ(p.velocity.x, 0.0);
-    EXPECT_DOUBLE_EQ(p.velocity.y, 0.0);
+  ASSERT_EQ(b.forces.size(), 3U);
+  ASSERT_EQ(b.accelerations.size(), 3U);
+
+  EXPECT_NEAR(b.forces.at(1).x, 0.0, tolerance);
+  EXPECT_NEAR(b.forces.at(1).y, 0.0, tolerance);
+  EXPECT_NEAR(b.accelerations.at(1).x, 0.0, tolerance);
+  EXPECT_NEAR(b.accelerations.at(1).y, 0.0, tolerance);
+  EXPECT_NEAR(ps.at(1).velocity.x, 0.0, tolerance);
+  EXPECT_NEAR(ps.at(1).velocity.y, 0.0, tolerance);
+}
+namespace{
+  void expect_point_near(point const& actual, point const& expected) {
+    EXPECT_NEAR(actual.x, expected.x, tolerance);
+    EXPECT_NEAR(actual.y, expected.y, tolerance);
   }
 }
 
-// step: ordering inside one iteration
+TEST(test_step, reusing_the_buffers_does_not_accumulate_old_forces) {
+  std::vector<particle> dirty_ps{
+    make(0, 2.0, {100.0, 100.0}, {}),
+    make(1, 3.0, {200.0, 100.0}, {}),
+    make(2, 4.0, {150.0, 200.0}, {}),
+  };
+  std::vector<particle> fresh_ps = dirty_ps;
+
+  buffers dirty;
+  dirty.forces.assign(4, point{123.0, 456.0});
+  dirty.accelerations.assign(4, point{42.0, 42.0});
+
+  buffers fresh;
+  auto const args = make_args(1000.0, 1000.0, 1.0e-3);
+
+  step(dirty_ps, dirty.forces, dirty.accelerations, args);
+  step(fresh_ps, fresh.forces, fresh.accelerations, args);
+
+  ASSERT_EQ(dirty.forces.size(), dirty_ps.size());
+  ASSERT_EQ(dirty.accelerations.size(), dirty_ps.size());
+  ASSERT_EQ(fresh.forces.size(), fresh_ps.size());
+  ASSERT_EQ(fresh.accelerations.size(), fresh_ps.size());
+
+  for (std::size_t i = 0; i < dirty_ps.size(); ++i) {
+    expect_point_near(dirty.forces.at(i), fresh.forces.at(i));
+    expect_point_near(
+    dirty.accelerations.at(i), fresh.accelerations.at(i));
+    expect_point_near(dirty_ps.at(i).velocity, fresh_ps.at(i).velocity);
+    expect_point_near(dirty_ps.at(i).position, fresh_ps.at(i).position);
+  }
+}
 
 TEST(test_step, position_uses_the_already_updated_velocity) {
   std::vector<particle> ps{
@@ -294,30 +400,7 @@ TEST(test_step, all_forces_use_the_positions_of_the_start_of_the_iteration) {
   EXPECT_DOUBLE_EQ(ps.at(1).velocity.x, -ps.at(0).velocity.x);
 }
 
-TEST(test_step, reusing_the_buffers_does_not_accumulate_old_forces) {
-  std::vector<particle> first{
-      make(0, 1.0e16, {100.0, 500.0}, {}),
-      make(1, 1.0e16, {200.0, 500.0}, {}),
-  };
-  auto second = first;
-  buffers reused;
-  buffers fresh;
-  auto const args = make_args(1000.0, 1000.0, 1.0e-6);
 
-  // Seed dirty buffers to verify that step() clears them.
-  reused.forces.push_back(point{123.0, 456.0});
-  reused.accelerations.push_back(point{789.0, 321.0});
-
-  step(first, reused.forces, reused.accelerations, args);
-  step(second, fresh.forces, fresh.accelerations, args);
-
-  EXPECT_TRUE(reused.forces.empty());
-  EXPECT_TRUE(reused.accelerations.empty());
-  EXPECT_TRUE(fresh.forces.empty());
-  EXPECT_TRUE(fresh.accelerations.empty());
-  EXPECT_DOUBLE_EQ(first.at(0).velocity.x, second.at(0).velocity.x);
-  EXPECT_DOUBLE_EQ(first.at(1).velocity.x, second.at(1).velocity.x);
-}
 
 // step: rebound (enclosure width x height, particle radius = 1)
 
