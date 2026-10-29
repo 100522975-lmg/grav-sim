@@ -13,18 +13,16 @@
 #include "simulation.hpp"
 #include "writer.hpp"
 
-
-namespace vw = std::views;
-
-namespace{
+namespace {
+  using namespace std::views;
   [[nodiscard]] auto transform_particles(const std::vector<particle>& particles, const common::program_arguments& progargs) {
     
     return writer::write_args {
-      particles | vw::transform(&particle::id),
-      particles | vw::transform(&particle::mass),
-      particles | vw::transform(&particle::radius),
-      particles | vw::transform(&particle::position),
-      particles | vw::transform(&particle::velocity),
+      particles | transform(&particle::id),
+      particles | transform(&particle::mass),
+      particles | transform(&particle::radius),
+      particles | transform(&particle::position),
+      particles | transform(&particle::velocity),
       progargs.width(),
       progargs.height(),
       progargs.time_step(),
@@ -33,34 +31,41 @@ namespace{
   }
 } //anonymous namespace
 
+/* -- Main --
+ * Unpack progargs values for better cache optimization
+ * Read input file into a buffer
+ * Generate particles based on the input file's rows
+ * Setup write-to-file lambda function
+ * Resolve initial collisions
+ * Write initial configuration
+ * Loop: step, resolve collisions, remove unused particles
+ * Write final configuration
+ * Error handling*/
 int main(int argc, char ** argv) try {
   std::span const spnargs{argv, static_cast<std::size_t>(argc)};
   std::vector<std::string> const vecargs{spnargs.begin(), spnargs.end()};
   common::program_arguments const progargs{vecargs};            
-  // Cache simulation parameters.
-  auto const width = progargs.width();
-  auto const height = progargs.height();
-  auto const time_step = progargs.time_step();
-  auto const iterations = progargs.num_iterations();
-  //read valid particles fo input, the id of each one is its position
-  auto const rows=read_particles("input/input.txt",width,height);
+
+  auto const rows=read_particles("input/input.txt", progargs.width(), progargs.height());
   std::vector<particle> particles;
   particles.reserve(rows.size());
   for(std::size_t id = 0; auto const& row : rows) {
     if (row.empty()) { id++; continue; }
     particles.push_back(make_particle(row, id++));
   }
-  //save current configuration
   auto const save=[&](std::string const& path){
-    writer::write_config(transform_particles(particles,progargs),path);
+    writer::write_config(transform_particles(particles, progargs),path);
   };
-  //resolve collisions
   aos::resolve_collisions(particles);
   remove_unused(particles);
   save("init_config_aos.txt");
-  //run simulation
-  for(std::size_t i=0;i<iterations;++i){
-    step(particles, width, height, time_step);
+  
+  std::size_t const N = particles.size();
+  std::vector<common::point> forces, accelerations;
+  forces.reserve(N); accelerations.reserve(N);
+
+  for(std::size_t i = 0; i < progargs.num_iterations(); ++i) {
+    step(particles, forces, accelerations, progargs);
     aos::resolve_collisions(particles);
     remove_unused(particles);
   }

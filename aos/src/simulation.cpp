@@ -1,63 +1,52 @@
 #include "simulation.hpp"
 #include "rebound.hpp"
+#include "gravity.hpp"
 
-#include <vector>
+#include <ranges>
 
-void reset_acceleration(std::vector<particle> & particles){
-    for (auto & p : particles){
-        p.acceleration.x=0.0;
-        p.acceleration.y=0.0;
-    }
-}
+namespace {
+inline void accumulate_forces(std::span<const particle> particles, std::vector<common::point> & forces) {
+    const auto pf = std::views::zip(particles, forces);
+    for (const auto [i, pf_i] : pf | std::views::enumerate) {
+        auto [p_i, f_i] = pf_i;
 
-
-void accumulate_forces(std::vector<particle> & particles){
-    const std::size_t n = particles.size();
-    //visit every pair exactly once
-    for(std::size_t i=0; i<n;++i){
-        auto & p_i=particles.at(i);
-        const double inv_m_i = 1.0/p_i.mass;
-        for(std::size_t j=i+1;j<n;++j){
-            auto & p_j=particles.at(j);
-            
-            //compute force exerted on p_i by p_j
-            common::point const force=common::pair_force(p_i.mass,p_j.mass,p_i.position,p_j.position);
-            //convert force to acceleration p_i
-            p_i.acceleration.x+=force.x*inv_m_i;
-            p_i.acceleration.y+=force.y*inv_m_i;
-            //p_j acceleration
-            const double inv_m_j=1.0/p_j.mass;
-            p_j.acceleration.x+=force.x*inv_m_j;
-            p_j.acceleration.y+=force.y*inv_m_j;
+        for (const auto [p_j, f_j]: pf | std::views::drop(i+1)) {
+            const auto f = common::pair_force(p_i.mass, p_j.mass, p_i.position, p_j.position);
+            f_i.x += f.x; f_i.y += f.y;
+            f_j.x -= f.x; f_j.y -= f.y;
         }
     }
 }
 
-
-
-void compute_acceleration(std::vector<particle> & particles){
-    //forget previous iteration
-    reset_acceleration(particles);
-    //sum of the forces on each particle
-    accumulate_forces(particles);
-
+inline void compute_acceleration(std::span<const particle> particles, std::span<const common::point> const forces, std::vector<common::point> & accelerations) {
+    const auto all = std::views::zip(particles, forces, accelerations);
+    double inv_mass = 0;
+    for (auto [p_i, f, a] : all) {
+        inv_mass = 1/p_i.mass;
+        a.x = f.x * inv_mass;
+        a.y = f.y * inv_mass;
+    }
 }
 
+    inline void apply_rebound(particle & p, double width, double height){
+        common::rebound_effect(p.position, p.velocity, p.radius, 
+                common::point{width, height});
+    }
+} // anonymous namespace for internal linkage
 
 
-void apply_rebound(particle & p, double width, double height){
-    //rebound_effect checks both axes at onces and updates velocity and position
-    common::rebound_effect(p.position,p.velocity,p.radius,common::point{width,height});
-}
-
-void step(std::vector<particle> & particles, double width, double height, double time_step ){
-    //all accelerations first
-    compute_acceleration(particles);
+void step(std::vector<particle> & particles, std::vector<common::point> & forces, std::vector<common::point> & accelerations, const common::program_arguments & progargs) {
+    const double dt = progargs.time_step();
+    const double w = progargs.width();
+    const double h = progargs.height();
+    forces.clear(); accelerations.clear();
+    accumulate_forces(particles, forces);
+    compute_acceleration(particles, forces, accelerations);
     //move every particle 
     for(auto & p:particles){
-        update_velocity(p,time_step);
+        update_velocity(p, dt);
         //eq 5 with new velocity
-        update_position(p,time_step);
-        apply_rebound(p,width,height);
+        update_position(p, dt);
+        apply_rebound(p, w, h);
     }
 }
