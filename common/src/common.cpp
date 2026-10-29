@@ -56,7 +56,7 @@ std::vector<std::vector<double>> read_particles(const std::string& input_path, d
   while (std::getline(file, line)) {
     const auto parsed = parse_particle_line(line);
     //  check if the particle is inside the enclosure and  radius and mass are strictly positive
-    if (parsed.at(0) > 0.0 and parsed.at(1) > 0.0 and check_bound(parsed, width, height)) {
+    if (not parsed.empty() and parsed.at(0) > 0.0 and parsed.at(1) > 0.0 and check_bound(parsed, width, height)) {
       particles.push_back(parsed);
     } else {
       particles.emplace_back(); // we need bad matches to correctly assign ids

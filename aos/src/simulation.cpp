@@ -45,7 +45,8 @@ void step(std::vector<particle> & particles, std::vector<common::point> & forces
     accumulate_forces(particles, forces);
     compute_acceleration(particles, forces, accelerations);
     //move every particle 
-    for(auto & p:particles){
+    for(auto [p, a] : std::views::zip(particles, accelerations)){
+        p.acceleration = a;
         update_velocity(p, dt);
         //eq 5 with new velocity
         update_position(p, dt);
