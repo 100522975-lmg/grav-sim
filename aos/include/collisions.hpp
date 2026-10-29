@@ -25,8 +25,9 @@ namespace aos {
   inline void resolve_collisions(std::span<particle> const particles) {
     const auto collisions = find_collisions(particles);
     for (const auto c : collisions) {
-      auto p_i = particles.subspan(c.i,1).front();
-      auto p_j = particles.subspan(c.j,1).front();
+      auto & p_i = particles.subspan(c.i,1).front();
+      auto & p_j = particles.subspan(c.j,1).front();
+      if (p_i.id == constants::UNUSED_ID or p_j.id == constants::UNUSED_ID) { continue; }
       common::collider const a{p_i.mass, p_i.radius, p_i.id};
       common::collider const b{p_j.mass, p_j.radius, p_j.id};
       if (common::choose_absorber(a,b)) {
