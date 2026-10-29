@@ -58,7 +58,7 @@ int main(int argc, char ** argv) try {
   };
   aos::resolve_collisions(particles);
   remove_unused(particles);
-  save("init_config_aos.txt");
+  save("init_config.txt");
   
   std::size_t const N = particles.size();
   std::vector<common::point> forces, accelerations;
@@ -69,7 +69,7 @@ int main(int argc, char ** argv) try {
     aos::resolve_collisions(particles);
     remove_unused(particles);
   }
-  save("final_config_aos.txt");
+  save("final_config.txt");
 } catch (std::exception const & e) {
   std::cerr << "grav-aos: " << e.what() << '\n';
   return EXIT_FAILURE;

@@ -60,4 +60,4 @@ t_err_time_step() {
   arg_error "time_step = -0.25" "$re"  100 1000 500 -0.25
   arg_error "time_step = 0"     "$re"  100 1000 500 0
   arg_error "time_step = abc"   "$re"  100 1000 500 abc
-}
+} 
