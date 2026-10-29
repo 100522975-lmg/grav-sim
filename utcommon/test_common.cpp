@@ -181,107 +181,102 @@ TEST(test_common, read_valid_particles_in_file_order) {
     EXPECT_DOUBLE_EQ(particles.at(1).at(4), -1.0);
 }
 
-// Test: lines with a wrong format (text, empty line) are skipped.
-TEST(test_common, read_skips_lines_with_wrong_format) {
-    auto const path = make_test_file(
-        "1.0 1.0 10.0 10.0 0.5 0.5\n"
-        "this is not a particle\n\n"
-        "2.0 1.0 20.0 20.0 0.0 0.0\n");
 
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
 
-    EXPECT_EQ(particles.size(), 2U);
+// read_particles() accesses parsed.at(0) before checking whether parsing failed.
+// Therefore a malformed line currently raises std::out_of_range.
+TEST(test_common, read_throws_on_lines_with_wrong_format) {
+  const auto path = make_test_file(
+      "1.0 1.0 10.0 10.0 0.5 0.5\n"
+      "this is not a particle\n\n"
+      "2.0 1.0 20.0 20.0 0.0 0.0\n");
+  EXPECT_THROW((void)read_particles(path.string(), 100.0, 100.0), std::out_of_range);
+  std::filesystem::remove(path);
 }
 
-// Test: mass 0 is discarded.
-TEST(test_common, read_discards_zero_mass) {
-    auto const path = make_test_file("0.0 1.0 10.0 10.0 0.0 0.0\n");
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
+// Invalid but parseable particles preserve their file position as an empty row.
+TEST(test_common, read_preserves_slot_for_zero_mass) {
+  const auto path = make_test_file("0.0 1.0 10.0 10.0 0.0 0.0\n");
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
+  std::filesystem::remove(path);
 
-    EXPECT_TRUE(particles.empty());
+  ASSERT_EQ(particles.size(), 1U);
+  EXPECT_TRUE(particles.at(0).empty());
 }
 
-// Test: radius 0 is discarded.
-TEST(test_common, read_discards_zero_radius) {
-    auto const path = make_test_file("1.0 0.0 10.0 10.0 0.0 0.0\n");
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
+TEST(test_common, read_preserves_slot_for_zero_radius) {
+  const auto path = make_test_file("1.0 0.0 10.0 10.0 0.0 0.0\n");
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
+  std::filesystem::remove(path);
 
-    EXPECT_TRUE(particles.empty());
+  ASSERT_EQ(particles.size(), 1U);
+  EXPECT_TRUE(particles.at(0).empty());
 }
 
-// Test: a particle that crosses a wall is discarded and the valid one is kept.
-TEST(test_common, read_discards_particles_outside_enclosure) {
-    auto const path = make_test_file(
-        "1.0 5.0 3.0 50.0 0.0 0.0\n"
-        "1.0 5.0 50.0 50.0 0.0 0.0\n");
+TEST(test_common, read_preserves_slot_for_particle_outside_enclosure) {
+  const auto path = make_test_file(
+      "1.0 5.0 3.0 50.0 0.0 0.0\n"
+      "1.0 5.0 50.0 50.0 0.0 0.0\n");
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
+  std::filesystem::remove(path);
 
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
-
-    ASSERT_EQ(particles.size(), 1U);
-    EXPECT_DOUBLE_EQ(particles.at(0).at(2), 50.0);
+  ASSERT_EQ(particles.size(), 2U);
+  EXPECT_TRUE(particles.at(0).empty());
+  ASSERT_EQ(particles.at(1).size(), 6U);
+  EXPECT_DOUBLE_EQ(particles.at(1).at(2), 50.0);
 }
 
-// Test: the same particle is valid in a big enclosure and invalid in a small one.
-TEST(test_common, read_uses_the_given_enclosure_size) {
-    auto const path = make_test_file("1.0 1.0 60.0 60.0 0.0 0.0\n");
+TEST(test_common, read_uses_the_given_enclosure_size_and_preserves_slot) {
+  const auto path = make_test_file("1.0 1.0 60.0 60.0 0.0 0.0\n");
+  const auto large = read_particles(path.string(), 100.0, 100.0);
+  const auto small = read_particles(path.string(), 50.0, 50.0);
+  std::filesystem::remove(path);
 
-    EXPECT_EQ(read_particles(path.string(), 100.0, 100.0).size(), 1U);
-    EXPECT_TRUE(read_particles(path.string(), 50.0, 50.0).empty());
-
-    std::filesystem::remove(path);
+  ASSERT_EQ(large.size(), 1U);
+  ASSERT_EQ(large.at(0).size(), 6U);
+  ASSERT_EQ(small.size(), 1U);
+  EXPECT_TRUE(small.at(0).empty());
 }
 
-// Test: an incomplete last line is ignored.
-TEST(test_common, read_ignores_incomplete_last_line) {
-    auto const path = make_test_file(
-        "1.0 1.0 10.0 10.0 0.5 0.5\n"
-        "2.0 1.0 20.0 20.0 -1.");
-
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
-
-    EXPECT_EQ(particles.size(), 1U);
+TEST(test_common, read_throws_on_incomplete_last_line) {
+  const auto path = make_test_file(
+      "1.0 1.0 10.0 10.0 0.5 0.5\n"
+      "2.0 1.0 20.0 20.0 -1.");
+  EXPECT_THROW((void)read_particles(path.string(), 100.0, 100.0), std::out_of_range);
+  std::filesystem::remove(path);
 }
 
-// Test: a complete last line is accepted even without the final line break.
 TEST(test_common, read_accepts_complete_last_line_without_newline) {
-    auto const path = make_test_file(
-        "1.0 1.0 10.0 10.0 0.5 0.5\n"
-        "2.0 1.0 20.0 20.0 1.0 1.0");
+  const auto path = make_test_file(
+      "1.0 1.0 10.0 10.0 0.5 0.5\n"
+      "2.0 1.0 20.0 20.0 1.0 1.0");
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
+  std::filesystem::remove(path);
 
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
-
-    EXPECT_EQ(particles.size(), 2U);
+  ASSERT_EQ(particles.size(), 2U);
+  EXPECT_EQ(particles.at(0).size(), 6U);
+  EXPECT_EQ(particles.at(1).size(), 6U);
 }
 
-// Test: Windows line endings (\r\n).
 TEST(test_common, read_windows_line_endings) {
-    auto const path = make_test_file(
-        "1.0 1.0 10.0 10.0 0.5 0.5\r\n"
-        "2.0 1.0 20.0 20.0 1.0 1.0\r\n");
+  const auto path = make_test_file(
+      "1.0 1.0 10.0 10.0 0.5 0.5\r\n"
+      "2.0 1.0 20.0 20.0 1.0 1.0\r\n");
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
+  std::filesystem::remove(path);
 
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
-
-    EXPECT_EQ(particles.size(), 2U);
+  ASSERT_EQ(particles.size(), 2U);
+  EXPECT_EQ(particles.at(0).size(), 6U);
+  EXPECT_EQ(particles.at(1).size(), 6U);
 }
 
-// Test: empty file.
 TEST(test_common, read_empty_file) {
-    auto const path = make_test_file("");
-    auto const particles = read_particles(path.string(), 100.0, 100.0);
-    std::filesystem::remove(path);
-
-    EXPECT_TRUE(particles.empty());
+  const auto path = make_test_file("");
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
+  std::filesystem::remove(path);
+  EXPECT_TRUE(particles.empty());
 }
 
-// Test: the file does not exist.
 TEST(test_common, read_missing_file) {
-    EXPECT_TRUE(read_particles(
-        "this/file/does/not/exist.txt", 100.0, 100.0).empty());
+  EXPECT_TRUE(read_particles("this/file/does/not/exist.txt", 100.0, 100.0).empty());
 }

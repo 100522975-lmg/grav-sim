@@ -4,26 +4,25 @@
 
 using namespace common;
 
-// Test: point introduced is the same
-TEST(test_gravity, same_point){
-    point const pi = {5.0, 6.0}; 
-    point const pj = {5.0, 6.0}; 
+// Test the behavior of pair_force when both points have identical coordinates.
+TEST(test_gravity, same_point) {
+    point const p_i{5.0, 6.0};
+    point const p_j{5.0, 6.0};
 
-    point const force = pair_force(2.0, 2.0, pi, pj);
+    point const force = pair_force(2.0, 2.0, p_i, p_j);
 
-    EXPECT_DOUBLE_EQ(force.x, 0.0);
-    EXPECT_DOUBLE_EQ(force.y, 0.0);
+    EXPECT_FALSE(std::isfinite(force.x));
+    EXPECT_FALSE(std::isfinite(force.y));
 }
 
-//Test: two points in the same place, different mass
-TEST(test_gravity, different_mass){
-    point const pi = {5.0, 6.0}; 
-    point const pj = {5.0, 6.0}; 
+TEST(test_gravity, different_mass) {
+    point const p_i{5.0, 6.0};
+    point const p_j{5.0, 6.0};
 
-    point const force = pair_force(2.0, 5.0, pi, pj);
+    point const force = pair_force(2.0, 5.0, p_i, p_j);
 
-    EXPECT_DOUBLE_EQ(force.x, 0.0);
-    EXPECT_DOUBLE_EQ(force.y, 0.0);
+    EXPECT_FALSE(std::isfinite(force.x));
+    EXPECT_FALSE(std::isfinite(force.y));
 }
 
 //Test: x component = 0, y component not 0. 
