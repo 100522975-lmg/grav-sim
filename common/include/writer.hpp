@@ -38,7 +38,7 @@ namespace writer {
     };
 
     inline void format_header(const header_args& args, std::ofstream& buffer) {
-      std::println(buffer, "{} {} {} {}", args.w, args.h, args.dt, args.n);
+      std::println(buffer, "{:.3f} {:.3f} {:.3f} {}", args.w, args.h, args.dt, args.n);
     }
 
     inline void format_particle_line(const line_args& args, std::ofstream& buffer) {
