@@ -185,14 +185,22 @@ TEST(test_common, read_valid_particles_in_file_order) {
 
 // read_particles() accesses parsed.at(0) before checking whether parsing failed.
 // Therefore a malformed line currently raises std::out_of_range.
-TEST(test_common, read_throws_on_lines_with_wrong_format) {
+TEST(test_common, read_preserves_slot_for_lines_with_wrong_format) {
   const auto path = make_test_file(
       "1.0 1.0 10.0 10.0 0.5 0.5\n"
       "this is not a particle\n\n"
       "2.0 1.0 20.0 20.0 0.0 0.0\n");
-  EXPECT_THROW((void)read_particles(path.string(), 100.0, 100.0), std::out_of_range);
+
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
   std::filesystem::remove(path);
+
+  ASSERT_EQ(particles.size(), 4U);
+  EXPECT_EQ(particles.at(0).size(), 6U);
+  EXPECT_TRUE(particles.at(1).empty());
+  EXPECT_TRUE(particles.at(2).empty());
+  EXPECT_EQ(particles.at(3).size(), 6U);
 }
+
 
 // Invalid but parseable particles preserve their file position as an empty row.
 TEST(test_common, read_preserves_slot_for_zero_mass) {
@@ -238,12 +246,17 @@ TEST(test_common, read_uses_the_given_enclosure_size_and_preserves_slot) {
   EXPECT_TRUE(small.at(0).empty());
 }
 
-TEST(test_common, read_throws_on_incomplete_last_line) {
+TEST(test_common, read_preserves_slot_for_incomplete_last_line) {
   const auto path = make_test_file(
       "1.0 1.0 10.0 10.0 0.5 0.5\n"
       "2.0 1.0 20.0 20.0 -1.");
-  EXPECT_THROW((void)read_particles(path.string(), 100.0, 100.0), std::out_of_range);
+
+  const auto particles = read_particles(path.string(), 100.0, 100.0);
   std::filesystem::remove(path);
+
+  ASSERT_EQ(particles.size(), 2U);
+  EXPECT_EQ(particles.at(0).size(), 6U);
+  EXPECT_TRUE(particles.at(1).empty());
 }
 
 TEST(test_common, read_accepts_complete_last_line_without_newline) {

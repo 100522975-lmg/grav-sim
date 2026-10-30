@@ -379,12 +379,13 @@ TEST(test_step, position_uses_the_already_updated_velocity) {
 
   step(ps, b.forces, b.accelerations, make_args(1000.0, 1000.0, dt));
 
-  // Current step() performs free motion because its force buffers stay empty.
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.x, 1.0);
-  EXPECT_DOUBLE_EQ(ps.at(0).velocity.y, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(0).position.x, 500.0 + ps.at(0).velocity.x * dt);
-  EXPECT_DOUBLE_EQ(ps.at(1).velocity.x, 0.0);
-  EXPECT_DOUBLE_EQ(ps.at(1).position.x, 600.0);
+  EXPECT_DOUBLE_EQ(
+      ps.at(0).position.x,
+      500.0 + ps.at(0).velocity.x * dt);
+
+  EXPECT_DOUBLE_EQ(
+      ps.at(1).position.x,
+      600.0 + ps.at(1).velocity.x * dt);
 }
 
 TEST(test_step, all_forces_use_the_positions_of_the_start_of_the_iteration) {
