@@ -1,7 +1,18 @@
-# grav-sim-template
-Template for gravity simulation project
-Unitary tests are located in their respective folders, utaos, utcommon and utsoa
-Functionary tests are located in the ftest folder
-The scripts folder has the tests for aos and soa for 1k and 10k particles
-utest.sh and build.sh are also located inside the scripts folder
-Input folder has inside the inputs used. In order to work, place your input inside this folder, as it reads "input/input.txt"
+# grav-sim
+
+## Build
+Use the following command to build the project: 
+```
+sbatch scripts/build.sh
+```
+
+## Input
+The program expects to read from:
+```
+input/input.txt
+```
+
+## Tests
+- Unit tests for each section can be found in their respective directories (utaos, utsoa, utcommon). Use utest.sh to execute all tests.
+
+- Functional test scripts can be found in the 'ftest' directory.
